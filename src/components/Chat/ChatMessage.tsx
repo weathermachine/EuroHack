@@ -6,7 +6,6 @@ import styles from './ChatMessage.module.css';
 interface ChatMessageProps {
   message: ChatMessageType;
   isStreaming?: boolean;
-  streamBuffer?: string;
   onInjectCode?: (code: string) => void;
 }
 
@@ -59,13 +58,11 @@ function formatTime(timestamp: number): string {
 export default function ChatMessage({
   message,
   isStreaming = false,
-  streamBuffer,
   onInjectCode,
 }: ChatMessageProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  const displayContent =
-    isStreaming && streamBuffer !== undefined ? streamBuffer : message.content;
+  const displayContent = message.content;
 
   const segments = useMemo(() => parseContent(displayContent), [displayContent]);
 

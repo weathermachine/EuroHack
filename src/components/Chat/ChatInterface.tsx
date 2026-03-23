@@ -14,10 +14,9 @@ export default function ChatInterface() {
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const streamBuffer = useChatStore((s) => s.streamBuffer);
   const addMessage = useChatStore((s) => s.addMessage);
   const setStreaming = useChatStore((s) => s.setStreaming);
-  const appendStream = useChatStore((s) => s.appendStream);
+  const appendToLastMessage = useChatStore((s) => s.appendToLastMessage);
   const completeStream = useChatStore((s) => s.completeStream);
   const addToHistory = useChatStore((s) => s.addToHistory);
 
@@ -38,7 +37,7 @@ export default function ChatInterface() {
               const result = await engine.evaluateCode(code);
               if (!result.success) {
                 // Show error in chat so user knows what happened
-                appendStream(`\n⚠️ Code error: ${result.error}`);
+                appendToLastMessage(`\n⚠️ Code error: ${result.error}`);
               }
             }).catch(() => {});
           }
@@ -51,10 +50,28 @@ export default function ChatInterface() {
           }
           break;
         }
-        // explain_music and suggest_changes are text-only, handled by stream
+        case 'explain_music': {
+          const explanation = tool.input.explanation as string;
+          if (explanation) {
+            appendToLastMessage(explanation);
+          }
+          break;
+        }
+        case 'suggest_changes': {
+          const suggestions = tool.input.suggestions as string[];
+          const code = tool.input.code as string | undefined;
+          if (suggestions?.length) {
+            const text = suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n');
+            appendToLastMessage(text);
+          }
+          if (code) {
+            appendToLastMessage('\n\n```strudel\n' + code + '\n```');
+          }
+          break;
+        }
       }
     },
-    [setCode],
+    [setCode, appendToLastMessage],
   );
 
   const handleSubmit = useCallback(
@@ -95,11 +112,11 @@ export default function ChatInterface() {
         },
         {
           onText: (chunk) => {
-            appendStream(chunk);
+            appendToLastMessage(chunk);
           },
           onToolCall: handleToolCall,
           onError: (error) => {
-            appendStream(`\n[Error: ${error}]`);
+            appendToLastMessage(`\n[Error: ${error}]`);
             completeStream();
           },
           onDone: () => {
@@ -120,7 +137,7 @@ export default function ChatInterface() {
       addMessage,
       addToHistory,
       setStreaming,
-      appendStream,
+      appendToLastMessage,
       completeStream,
       handleToolCall,
       patternCode,
@@ -165,11 +182,6 @@ export default function ChatInterface() {
               message={message}
               isStreaming={
                 isStreaming && index === messages.length - 1
-              }
-              streamBuffer={
-                isStreaming && index === messages.length - 1
-                  ? streamBuffer
-                  : undefined
               }
               onInjectCode={handleInjectCode}
             />

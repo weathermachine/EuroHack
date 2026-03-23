@@ -18,13 +18,13 @@ stack(
   s("hh*8").gain(0.5).mask("<0 1 1 1>"),
 
   // Bass — enter at bar 2
-  note("c2 ~ c2 eb2").sound("gm_synth_bass_1").mask("<0 1 1 1>").gain(0.8),
+  note("c2 ~ c2 eb2").sound("sawtooth").lpf(400).release(0.1).mask("<0 1 1 1>").gain(0.8),
 
   // Melody — only bar 3 (hook)
-  note("c4 eb4 g4 bb4").sound("gm_epiano1").mask("<0 0 1 0>").gain(0.5),
+  note("c4 eb4 g4 bb4").sound("fm").fmi(1.5).fmh(2).mask("<0 0 1 0>").gain(0.5),
 
   // Pad — bars 3 and 4
-  note("<Cm7 Fm7>").sound("gm_pad_warm").voicing().mask("<0 0 1 1>").gain(0.3)
+  note("<Cm7 Fm7>").sound("sawtooth").lpf(800).release(1).room(0.6).voicing().mask("<0 0 1 1>").gain(0.3)
 )
 ```
 
@@ -104,7 +104,7 @@ stack(
   s("bd*4"),           // kick layer
   s("~ cp ~ cp"),      // snare layer
   s("hh*8"),           // hat layer
-  note("c2 e2").sound("gm_synth_bass_1")  // bass layer
+  note("c2 e2").sound("sawtooth").lpf(400).release(0.1)  // bass layer
 )
 ```
 
@@ -132,10 +132,10 @@ stack(
 Map numbers to scale degrees:
 ```js
 // Play scale degrees 0-7 in C minor
-n("0 2 4 6 3 5 7 4").scale("C:minor").sound("gm_epiano1")
+n("0 2 4 6 3 5 7 4").scale("C:minor").sound("fm").fmi(1.5).fmh(2)
 
 // Random notes from scale
-n("[0 1 2 3 4 5 6 7]?").scale("C:minor").sound("gm_vibraphone")
+n("[0 1 2 3 4 5 6 7]?").scale("C:minor").sound("fm").fmi(3).fmh(3.5).release(0.5)
 ```
 
 ### Common Scales
@@ -147,7 +147,7 @@ n("[0 1 2 3 4 5 6 7]?").scale("C:minor").sound("gm_vibraphone")
 ### Chord Voicings with `.voicing()`
 Automatically voice-lead chord symbols:
 ```js
-note("<C^7 Dm7 G7 C^7>").sound("gm_epiano1").voicing()
+note("<C^7 Dm7 G7 C^7>").sound("fm").fmi(1.5).fmh(2).voicing()
 ```
 
 ## Variation Techniques
@@ -169,14 +169,14 @@ s("bd sd bd sd").sometimes(x => x.speed(1.5))
 ### `.off(time, fn)` — Overlay a delayed, modified copy
 ```js
 // Echo with pitch shift
-note("c4 e4 g4 b4").sound("gm_piano")
+note("c4 e4 g4 b4").sound("fm").fmi(1.5).fmh(2)
   .off(1/8, x => x.note(12).gain(0.5))
 ```
 
 ### `.superimpose(fn)` — Layer with modified version
 ```js
 // Layer original with octave-up version
-note("c3 e3 g3").sound("gm_piano")
+note("c3 e3 g3").sound("triangle")
   .superimpose(x => x.note(12).gain(0.4))
 ```
 
@@ -188,7 +188,7 @@ note("c3 e3 g3").sound("gm_piano")
 s("hh*8").mask("<0 0 1 1>")
 
 // Play first 2 of every 4 cycles
-note("c4 e4").sound("gm_piano").mask("<1 1 0 0>")
+note("c4 e4").sound("fm").fmi(1.5).fmh(2).mask("<1 1 0 0>")
 ```
 
 ### Building Intensity
@@ -197,7 +197,7 @@ stack(
   s("bd*4"),                                    // always on
   s("hh*8").mask("<0 1 1 1>"),                  // enters cycle 2
   s("~ cp ~ cp").mask("<0 0 1 1>"),             // enters cycle 3
-  note("c2 e2").sound("gm_synth_bass_1").mask("<0 0 0 1>")  // enters cycle 4
+  note("c2 e2").sound("sawtooth").lpf(400).release(0.1).mask("<0 0 0 1>")  // enters cycle 4
 )
 ```
 
@@ -225,5 +225,5 @@ stack(
 
 Use `.voicing()` with these for automatic voice leading:
 ```js
-note("<Dm7 G7 C^7 Am7>").sound("gm_epiano1").voicing()
+note("<Dm7 G7 C^7 Am7>").sound("fm").fmi(1.5).fmh(2).voicing()
 ```

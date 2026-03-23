@@ -121,18 +121,25 @@ bass, piano, casio, jazz, metal, techno, gabba, jvbass, future
 808lc (808 low conga), 808mc (808 mid conga)
 Use directly: s("808bd 808sd 808bd 808sd") — do NOT use .bank("RolandTR808")
 
-### GM Soundfont Instruments (via @strudel/soundfonts):
-gm_acoustic_grand_piano, gm_electric_piano_1 (or gm_epiano1), gm_electric_piano_2,
-gm_drawbar_organ, gm_vibraphone, gm_marimba, gm_acoustic_guitar_nylon,
-gm_electric_guitar_clean, gm_acoustic_bass, gm_electric_bass_finger,
-gm_synth_bass_1, gm_synth_bass_2, gm_violin, gm_string_ensemble_1,
-gm_trumpet, gm_french_horn, gm_flute, gm_synth_lead_1_square,
-gm_synth_pad_1_new_age, gm_synth_pad_2_warm
+### GM Soundfonts — DO NOT USE (BROKEN):
+All gm_* names (gm_epiano1, gm_piano, gm_synth_bass_2, gm_pad_warm, etc.) are
+BROKEN due to a dual-registry issue. They will produce silence or errors.
+NEVER use any gm_* sound name.
 
-## IMPORTANT: Do NOT use .bank()
+### For melodic/harmonic parts, use built-in synths:
+- fm (electric piano feel): note("c4").sound("fm").fmi(1.5).fmh(2)
+- sawtooth (bass, pads, strings): note("c2").sound("sawtooth").lpf(400)
+- triangle (soft leads, flute-like): note("c4").sound("triangle")
+- sine (sub-bass, pure tones): note("c2").sound("sine").lpf(200)
+- square (organ-like, chiptune): note("c4").sound("square")
+
+### Dirt-sample tonal instruments (also work for melodies):
+arpy, jvbass, casio, juno, moog, pluck, pad, sax, hoover, stab
+
+## IMPORTANT: Do NOT use .bank() or gm_* names
 The .bank("RolandTR808") syntax is NOT supported in this environment.
 Instead, use the 808 samples directly: s("808bd") instead of s("bd").bank("RolandTR808")
-Similarly, use GM soundfonts directly: .s("gm_acoustic_grand_piano")
+All gm_* soundfont names are BROKEN — use built-in synths (fm, sawtooth, triangle, sine, square) instead.
 
 ## Tempo Reference
 - setcps(0.5) = 120 BPM (standard house/techno)
@@ -176,9 +183,9 @@ stack(
   s("808bd ~ ~ ~ ~ ~ 808bd ~").gain(1.1),
   s("~ ~ ~ 808sd ~ ~ ~ 808sd").room(0.15).gain(0.95),
   s("808hc*8").gain("[.4 .7 .5 .8]*1").late("0 .04 0 .04"),
-  note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("gm_synth_bass_2")
+  note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("sawtooth").lpf(400)
     .gain(1.0).attack(0.01).decay(0.5).sustain(0.8).release(0.3),
-  note("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("gm_electric_piano_1")
+  note("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("fm").fmi(1.5).fmh(2)
     .struct("x ~ [~ x] ~").room(0.3).gain(0.5)
     .attack(0.01).release(0.2)
 )

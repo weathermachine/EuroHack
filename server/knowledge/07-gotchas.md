@@ -89,22 +89,41 @@ setcps(0.5)
 s("bd sd")
 ```
 
-## 7. GM soundfont names use underscores
+## 7. GM soundfont names (`gm_*`) DO NOT WORK — use built-in synths instead
 
-All GM soundfont names use underscores, not hyphens or camelCase.
+**All `gm_*` sound names are BROKEN** due to a dual-registry issue between `@strudel/soundfonts` and `@strudel/web`. They register in the wrong sound registry and the REPL cannot find them.
 
 ```js
-// WRONG
-s("gm-epiano1")
-s("gmEpiano1")
-s("gm epiano1")
-
-// CORRECT
+// WRONG — will produce silence / "sound not found"
 s("gm_epiano1")
 note("c4").sound("gm_electric_bass_finger")
+note("<Cm7 Fm7>").sound("gm_pad_warm")
+note("c3").sound("gm_trumpet")
+
+// CORRECT — use built-in synths
+note("<Cm7 Fm7>").sound("fm").fmi(1.5).fmh(2).voicing()     // electric piano feel
+note("c2 e2 g2").sound("sawtooth").lpf(400).release(0.1)     // bass
+note("<Cm7 Ab^7>").sound("sawtooth").lpf(800).release(1).room(0.6)  // pad
+note("c4 e4 g4").sound("triangle").release(0.3)               // flute-like lead
 ```
 
-## 8. Don't use `let` or `const` for the final pattern
+Available built-in synths: `sine`, `sawtooth`, `square`, `triangle`, `fm`. See 04-soundfonts.md for the full substitution guide.
+
+## 8. Bank sample names (`RolandTR808_bd`, etc.) DO NOT WORK
+
+Bank-prefixed sample names like `RolandTR808_bd`, `RolandTR909_sd`, `EmuSP12_hh` are **NOT reliably available**. They depend on an external server (shabda.ndre.gr) and have format mapping issues.
+
+```js
+// WRONG — will produce silence
+s("RolandTR808_bd RolandTR808_sd")
+
+// CORRECT — use dirt-sample 808 names directly
+s("808bd 808sd")
+```
+
+Use the dirt-sample equivalents: `808bd`, `808sd`, `808hc`, `808oh`, `808cy`, `808ht`, `808mt`, `808lt`.
+
+## 9. Don't use `let` or `const` for the final pattern
 
 The REPL expects a bare expression as the last statement, not a variable declaration.
 
@@ -123,7 +142,7 @@ stack(
 )
 ```
 
-## 9. `.note()` expects note names or MIDI numbers
+## 10. `.note()` expects note names or MIDI numbers
 
 ```js
 // CORRECT
@@ -134,7 +153,7 @@ note("60 64 67")
 note("C E G")  // must be lowercase with octave
 ```
 
-## 10. Continuous patterns need `.range()` for useful values
+## 11. Continuous patterns need `.range()` for useful values
 
 Bare oscillators output 0-1. Use `.range()` to map to useful ranges:
 
@@ -146,7 +165,7 @@ s("hh*8").lpf(sine)
 s("hh*8").lpf(sine.range(200, 5000).slow(4))
 ```
 
-## 11. `.speed()` with negative values reverses playback
+## 12. `.speed()` with negative values reverses playback
 
 This is intentional, but can surprise you:
 ```js
@@ -154,7 +173,7 @@ s("bd").speed(-1)  // plays backward
 s("bd").speed(0)   // silence (no playback)
 ```
 
-## 12. `.cut()` groups are global
+## 13. `.cut()` groups are global
 
 All sounds with the same cut group number will cut each other off, even across different `stack()` layers:
 ```js

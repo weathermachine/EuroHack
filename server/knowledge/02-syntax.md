@@ -42,7 +42,7 @@ note("60 64 67 71")
 ### `n(mininotation)`
 Create a pattern of numbers, typically for selecting sample variants or scale degrees.
 ```js
-n("0 2 4 6").scale("C:minor").sound("gm_epiano1")
+n("0 2 4 6").scale("C:minor").sound("fm").fmi(1.5).fmh(2)
 ```
 
 ### `stack(pat1, pat2, ...)`
@@ -51,7 +51,7 @@ Layer multiple patterns simultaneously. Takes **individual arguments**, NOT an a
 stack(
   s("bd sd bd sd"),
   s("hh*8"),
-  note("c2 e2").sound("gm_acoustic_bass")
+  note("c2 e2").sound("sawtooth").lpf(400).release(0.1)
 )
 ```
 
@@ -198,7 +198,7 @@ setcps(0.5)
 stack(
   s("bd sd bd sd").gain(0.9),
   s("hh*8").gain(0.6),
-  note("c2 e2 g2 e2").sound("gm_acoustic_bass")
+  note("c2 e2 g2 e2").sound("sawtooth").lpf(400).release(0.1)
 )
 ```
 

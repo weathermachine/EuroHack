@@ -2,11 +2,13 @@
 
 Each genre includes BPM, tempo setup, drum patterns, bass, chords, effects, groove techniques, and a complete working template.
 
+**All templates use ONLY confirmed-working sounds: dirt-samples + built-in synths (sine, sawtooth, square, triangle, fm).**
+
 ---
 
 ## 1. Hip Hop (85-95 BPM)
 
-**Tempo:** `setcps(90/240)` → 90 BPM
+**Tempo:** `setcps(90/240)` -> 90 BPM
 
 ### Characteristics
 - Boom bap drum feel with swing
@@ -23,15 +25,15 @@ s("808hc*8").gain("[.4 .7 .5 .8]*2")       // hats with velocity
 ```
 
 ### Bass Approach
-Use `gm_synth_bass_2` for rubber 808-style bass, or `808bd` with long tails.
+Use `sawtooth` with low-pass filter for rubber 808-style bass:
 ```js
-note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("gm_synth_bass_2").lpf(400).gain(0.85)
+note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85)
 ```
 
 ### Chords/Keys
-Rhodes or lo-fi piano — `gm_epiano1` or `gm_epiano2` with filtering.
+FM synth for Rhodes-like electric piano feel:
 ```js
-note("<Cm7 Fm7 Ab^7 G7>").sound("gm_epiano1").voicing().lpf(1200).gain(0.5)
+note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.5)
 ```
 
 ### Effects Profile
@@ -53,8 +55,8 @@ stack(
   s("[~ ~ ~ ~] 808sd:3 [~ ~ ~ ~] 808sd:3").gain(0.8),
   s("808hc*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2"),
   s("808oh ~ ~ ~ 808oh ~ ~ ~").gain(0.3),
-  note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("gm_synth_bass_2").lpf(400).gain(0.85),
-  note("<Cm7 Fm7 Ab^7 G7>").sound("gm_epiano1").voicing().lpf(1200).gain(0.45).room(0.2)
+  note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85),
+  note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.45).room(0.2)
 )
 ```
 
@@ -62,7 +64,7 @@ stack(
 
 ## 2. Techno (130-145 BPM)
 
-**Tempo:** `setcps(138/240)` → 138 BPM
+**Tempo:** `setcps(138/240)` -> 138 BPM
 
 ### Characteristics
 - Relentless four-on-the-floor kick
@@ -80,7 +82,7 @@ s("~ ~ ~ ~ ~ ~ oh ~")                        // open hat accents
 ```
 
 ### Bass Approach
-Acid-style with filter sweeps — use `sawtooth` or `gm_synth_bass_1`:
+Acid-style with filter sweeps — use `sawtooth`:
 ```js
 note("c2 c2 c3 c2 eb2 c2 c3 c2").sound("sawtooth")
   .lpf(sine.range(200, 3000).slow(8)).lpq(8).gain(0.7)
@@ -89,7 +91,7 @@ note("c2 c2 c3 c2 eb2 c2 c3 c2").sound("sawtooth")
 ### Chords/Keys
 Minimal — stabs or pads, not full progressions.
 ```js
-note("<C5 Eb5>/4").sound("gm_pad_sweep").gain(0.25).room(0.6).size(0.9)
+note("<C5 Eb5>/4").sound("sawtooth").lpf(1500).release(1.5).gain(0.25).room(0.6).size(0.9)
 ```
 
 ### Effects Profile
@@ -122,7 +124,7 @@ stack(
 
 ## 3. House (120-128 BPM)
 
-**Tempo:** `setcps(124/240)` → 124 BPM
+**Tempo:** `setcps(124/240)` -> 124 BPM
 
 ### Characteristics
 - Four-on-the-floor kick
@@ -140,15 +142,15 @@ s("oh ~ oh ~ oh ~ oh ~").gain(0.3)           // open hat pulse
 ```
 
 ### Bass Approach
-Deep and rolling — `gm_synth_bass_1` or `gm_electric_bass_finger`:
+Deep and rolling — use `sawtooth` or `triangle`:
 ```js
-note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("gm_synth_bass_1").lpf(500).gain(0.8)
+note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8)
 ```
 
 ### Chords/Keys
-Piano stabs — `gm_piano` or `gm_epiano1`:
+Piano stabs — use `fm` for electric piano feel:
 ```js
-note("<Cm7 Fm7 Bb7 Eb^7>").sound("gm_piano").voicing().gain(0.5)
+note("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
   .room(0.2).delay(0.15)
 ```
 
@@ -171,8 +173,8 @@ stack(
   s("~ hh ~ hh").gain(0.7),
   s("~ cp ~ cp").room(0.25).gain(0.75),
   s("oh*4").gain("[0 .3 0 .3]"),
-  note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("gm_synth_bass_1").lpf(500).gain(0.8),
-  note("<Cm7 Fm7 Bb7 Eb^7>").sound("gm_epiano1").voicing().gain(0.45)
+  note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8),
+  note("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
     .room(0.25).delay(0.15).delaytime(0.19)
 )
 ```
@@ -181,7 +183,7 @@ stack(
 
 ## 4. Drum & Bass (170-180 BPM)
 
-**Tempo:** `setcps(174/240)` → 174 BPM
+**Tempo:** `setcps(174/240)` -> 174 BPM
 
 ### Characteristics
 - Fast, syncopated breakbeats
@@ -198,17 +200,17 @@ s("hh*16").gain("[.3 .6 .4 .7]*4")           // rapid hats
 ```
 
 ### Bass Approach
-Reese bass — detuned sawtooth or `gm_synth_bass_2`:
+Reese bass — detuned sawtooth:
 ```js
 note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
   .lpf(sine.range(150, 800).slow(4)).gain(0.8).distort(0.1)
 ```
 
 ### Chords/Keys
-Dark atmospheric pads:
+Dark atmospheric pads using sawtooth with heavy filtering:
 ```js
-note("<Cm Gm Ab Bb>").sound("gm_pad_warm").voicing().gain(0.3)
-  .lpf(2000).room(0.5).size(0.8).release(1)
+note("<Cm Gm Ab Bb>").sound("sawtooth").voicing().gain(0.3)
+  .lpf(1200).room(0.5).size(0.8).release(1)
 ```
 
 ### Effects Profile
@@ -232,8 +234,8 @@ stack(
   s("hh*16").gain("[.3 .6 .4 .7]*4").lpf(6000),
   note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
     .lpf(sine.range(150, 800).slow(4)).gain(0.75).distort(0.1),
-  note("<Cm Gm Ab Bb>").sound("gm_pad_warm").voicing().gain(0.25)
-    .lpf(2000).room(0.5).size(0.8)
+  note("<Cm Gm Ab Bb>").sound("sawtooth").voicing().gain(0.25)
+    .lpf(1200).room(0.5).size(0.8).release(1)
 )
 ```
 
@@ -241,7 +243,7 @@ stack(
 
 ## 5. Soul / R&B (90-100 BPM)
 
-**Tempo:** `setcps(95/240)` → 95 BPM
+**Tempo:** `setcps(95/240)` -> 95 BPM
 
 ### Characteristics
 - Pocket timing with deep groove
@@ -258,16 +260,16 @@ s("[hh hh hh hh] [hh hh hh hh]").gain("[.4 .6 .5 .7]*2")  // gentle hats
 ```
 
 ### Bass Approach
-Walking bass — `gm_electric_bass_finger` or `gm_acoustic_bass`:
+Walking bass — use `triangle` for warm finger-bass feel:
 ```js
-note("c2 e2 g2 e2 f2 a2 c3 a2").sound("gm_electric_bass_finger")
-  .gain(0.75).lpf(800)
+note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
+  .gain(0.75).lpf(600).release(0.15)
 ```
 
 ### Chords/Keys
-Rich Rhodes voicings:
+Rich Rhodes voicings using FM synth:
 ```js
-note("<Cm9 Fm9 Dm7b5 G7>").sound("gm_epiano1").voicing().gain(0.5)
+note("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
   .room(0.3).size(0.4).lpf(2500)
 ```
 
@@ -289,11 +291,11 @@ stack(
   s("bd ~ [~ bd] ~").gain(0.85),
   s("~ sd ~ sd").gain(0.7).room(0.2),
   s("[hh hh hh hh]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2"),
-  note("c2 e2 g2 e2 f2 a2 c3 a2").sound("gm_electric_bass_finger")
-    .gain(0.7).lpf(800),
-  note("<Cm9 Fm9 Dm7b5 G7>").sound("gm_epiano1").voicing().gain(0.45)
+  note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
+    .gain(0.7).lpf(600).release(0.15),
+  note("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
     .room(0.3).size(0.4).lpf(2500),
-  note("<C4 E4 G4 C5>/2").sound("gm_vibraphone").gain(0.2).room(0.4)
+  note("<C4 E4 G4 C5>/2").sound("fm").fmi(3).fmh(3.5).gain(0.2).room(0.4).release(0.5)
 )
 ```
 
@@ -301,7 +303,7 @@ stack(
 
 ## 6. Ambient / Downtempo (60-90 BPM)
 
-**Tempo:** `setcps(70/240)` → 70 BPM
+**Tempo:** `setcps(70/240)` -> 70 BPM
 
 ### Characteristics
 - Sparse or no drums
@@ -323,9 +325,9 @@ note("c2 ~ ~ ~ ~ ~ eb2 ~").sound("sine").gain(0.6).release(0.8).lpf(200)
 ```
 
 ### Chords/Keys
-Lush evolving pads — `gm_pad_warm`, `gm_pad_new_age`, `gm_choir_aahs`:
+Lush evolving pads — sawtooth with heavy filtering and reverb:
 ```js
-note("<Cm7 Ab^7 Fm9 G7sus4>").sound("gm_pad_warm").voicing()
+note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
   .room(0.8).size(0.95).release(2).gain(0.4)
   .lpf(sine.range(800, 3000).slow(16))
 ```
@@ -341,11 +343,11 @@ note("<Cm7 Ab^7 Fm9 G7sus4>").sound("gm_pad_warm").voicing()
 setcps(70/240)
 stack(
   s("bd ~ ~ ~ bd ~ ~ ~").gain(0.45).room(0.4).lpf(200),
-  note("<Cm7 Ab^7 Fm9 G7sus4>").sound("gm_pad_warm").voicing()
+  note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
     .room(0.8).size(0.95).release(2).gain(0.35)
     .lpf(sine.range(800, 3000).slow(16)),
-  note("<C4 Ab3 F4 G4>/2").sound("gm_vibraphone").gain(0.15)
-    .room(0.7).delay(0.5).delaytime(0.375).delayfeedback(0.5),
+  note("<C4 Ab3 F4 G4>/2").sound("fm").fmi(3).fmh(3.5).gain(0.15)
+    .room(0.7).delay(0.5).delaytime(0.375).delayfeedback(0.5).release(0.6),
   note("c2 ~ ~ ~ ~ ~ eb2 ~").sound("sine").gain(0.5).release(0.8).lpf(200),
   s("wind:3").gain(0.1).room(0.5).speed(0.5).begin(0.1).end(0.9)
 )
@@ -355,7 +357,7 @@ stack(
 
 ## 7. Lo-fi (75-90 BPM)
 
-**Tempo:** `setcps(82/240)` → 82 BPM
+**Tempo:** `setcps(82/240)` -> 82 BPM
 
 ### Characteristics
 - Muted, soft drums
@@ -372,16 +374,16 @@ s("hh*8").lpf(2500).gain("[.3 .5 .3 .6]*2")   // filtered hats
 ```
 
 ### Bass Approach
-Warm, muted bass — `gm_electric_bass_finger` with heavy filtering:
+Warm, muted bass — triangle with heavy filtering:
 ```js
-note("c2 ~ e2 ~ f2 ~ g2 ~").sound("gm_electric_bass_finger")
-  .lpf(400).gain(0.7)
+note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
+  .lpf(400).release(0.15).gain(0.7)
 ```
 
 ### Chords/Keys
-Detuned Rhodes — `gm_epiano1` with filtering and slight pitch wobble:
+Detuned Rhodes feel — FM synth with filtering:
 ```js
-note("<Cm7 Fm7 Ab^7 Gm7>").sound("gm_epiano1").voicing()
+note("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
   .lpf(1500).gain(0.4).room(0.3)
 ```
 
@@ -404,9 +406,9 @@ stack(
   s("bd ~ [~ bd] ~").lpf(2000).gain(0.7),
   s("~ sd ~ sd").lpf(3000).gain(0.5).room(0.2),
   s("hh*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2"),
-  note("c2 ~ e2 ~ f2 ~ g2 ~").sound("gm_electric_bass_finger")
-    .lpf(400).gain(0.65),
-  note("<Cm7 Fm7 Ab^7 Gm7>").sound("gm_epiano1").voicing()
+  note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
+    .lpf(400).release(0.15).gain(0.65),
+  note("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
     .lpf(1500).gain(0.4).room(0.3),
   s("noise:1").gain(0.04).lpf(3000).crush(10)
 )

@@ -4,13 +4,12 @@ import type { ChatMessage, CodeBlock } from '../types/messages';
 interface ChatStore {
   messages: ChatMessage[];
   isStreaming: boolean;
-  streamBuffer: string;
   commandHistory: string[];
   historyIndex: number;
 
   addMessage: (message: ChatMessage) => void;
   setStreaming: (streaming: boolean) => void;
-  appendStream: (chunk: string) => void;
+  appendToLastMessage: (chunk: string) => void;
   completeStream: () => void;
   addToHistory: (command: string) => void;
   navigateHistory: (direction: 'up' | 'down') => string;
@@ -38,7 +37,6 @@ export function extractCodeBlocks(content: string): CodeBlock[] {
 export const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
   isStreaming: false,
-  streamBuffer: '',
   commandHistory: [],
   historyIndex: -1,
 
@@ -47,50 +45,46 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   setStreaming: (isStreaming) => set({ isStreaming }),
 
-  appendStream: (chunk) =>
-    set((state) => ({ streamBuffer: state.streamBuffer + chunk })),
+  // Append text chunk directly to the last message's content.
+  // This creates a new messages array each time so Virtuoso re-renders.
+  appendToLastMessage: (chunk) =>
+    set((state) => {
+      const msgs = [...state.messages];
+      const last = msgs[msgs.length - 1];
+      if (last && last.role === 'assistant') {
+        msgs[msgs.length - 1] = {
+          ...last,
+          content: last.content + chunk,
+        };
+      }
+      return { messages: msgs };
+    }),
 
   completeStream: () => {
-    const { streamBuffer, messages } = get();
-    if (streamBuffer) {
-      // Update the last assistant message in place with the streamed content
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg && lastMsg.role === 'assistant') {
-        const updated = {
-          ...lastMsg,
-          content: streamBuffer,
-          codeBlocks: extractCodeBlocks(streamBuffer),
-        };
+    const { messages } = get();
+    const lastMsg = messages[messages.length - 1];
+
+    if (lastMsg && lastMsg.role === 'assistant') {
+      // Finalize: extract code blocks from the completed content
+      const updated = {
+        ...lastMsg,
+        codeBlocks: extractCodeBlocks(lastMsg.content),
+      };
+
+      // If message is empty (no text, only tool calls), remove it
+      if (!updated.content.trim()) {
         set({
-          messages: [...messages.slice(0, -1), updated],
-          streamBuffer: '',
+          messages: messages.slice(0, -1),
           isStreaming: false,
         });
       } else {
-        // Fallback: add as new message
-        set((state) => ({
-          messages: [
-            ...state.messages,
-            {
-              id: createMessageId(),
-              role: 'assistant' as const,
-              content: streamBuffer,
-              codeBlocks: extractCodeBlocks(streamBuffer),
-              timestamp: Date.now(),
-            },
-          ],
-          streamBuffer: '',
+        set({
+          messages: [...messages.slice(0, -1), updated],
           isStreaming: false,
-        }));
+        });
       }
     } else {
-      // No content streamed — remove the empty placeholder
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.content) {
-        set({ messages: messages.slice(0, -1), isStreaming: false, streamBuffer: '' });
-      } else {
-        set({ isStreaming: false, streamBuffer: '' });
-      }
+      set({ isStreaming: false });
     }
   },
 
