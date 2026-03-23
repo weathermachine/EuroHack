@@ -185,7 +185,7 @@ stack(
   s("808hc*8").gain("[.4 .7 .5 .8]*1").late("0 .04 0 .04"),
   note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("sawtooth").lpf(400)
     .gain(1.0).attack(0.01).decay(0.5).sustain(0.8).release(0.3),
-  note("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("fm").fmi(1.5).fmh(2)
+  chord("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("fm").fmi(1.5).fmh(2)
     .struct("x ~ [~ x] ~").room(0.3).gain(0.5)
     .attack(0.01).release(0.2)
 )

@@ -24,7 +24,7 @@ stack(
   note("c4 eb4 g4 bb4").sound("fm").fmi(1.5).fmh(2).mask("<0 0 1 0>").gain(0.5),
 
   // Pad — bars 3 and 4
-  note("<Cm7 Fm7>").sound("sawtooth").lpf(800).release(1).room(0.6).voicing().mask("<0 0 1 1>").gain(0.3)
+  chord("<Cm7 Fm7>").sound("sawtooth").lpf(800).release(1).room(0.6).voicing().mask("<0 0 1 1>").gain(0.3)
 )
 ```
 
@@ -147,7 +147,7 @@ n("[0 1 2 3 4 5 6 7]?").scale("C:minor").sound("fm").fmi(3).fmh(3.5).release(0.5
 ### Chord Voicings with `.voicing()`
 Automatically voice-lead chord symbols:
 ```js
-note("<C^7 Dm7 G7 C^7>").sound("fm").fmi(1.5).fmh(2).voicing()
+chord("<C^7 Dm7 G7 C^7>").sound("fm").fmi(1.5).fmh(2).voicing()
 ```
 
 ## Variation Techniques
@@ -225,5 +225,5 @@ stack(
 
 Use `.voicing()` with these for automatic voice leading:
 ```js
-note("<Dm7 G7 C^7 Am7>").sound("fm").fmi(1.5).fmh(2).voicing()
+chord("<Dm7 G7 C^7 Am7>").sound("fm").fmi(1.5).fmh(2).voicing()
 ```

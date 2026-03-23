@@ -170,7 +170,7 @@ These are chained onto pattern expressions with dot notation.
 ### Voicing & Chords
 | Method | Description | Example |
 |--------|-------------|---------|
-| `.voicing()` | Auto voice-lead chords | `note("<C^7 Dm7 G7>").voicing()` |
+| `.voicing()` | Auto voice-lead chords | `chord("<C^7 Dm7 G7>").voicing()` |
 | `.mode(m)` | Voicing mode | `.voicing().mode("below")` |
 | `.anchor(n)` | Voicing anchor note | `.voicing().anchor("c4")` |
 

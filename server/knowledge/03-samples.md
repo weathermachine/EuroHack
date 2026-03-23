@@ -172,7 +172,7 @@ For melodic/harmonic parts, use built-in synths instead of GM soundfonts:
 ```js
 // Use these INSTEAD of gm_epiano1, gm_piano, gm_synth_bass_2, etc.
 // Electric piano substitute:
-note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
 
 // Pad substitute:
 note("<Cm7 Ab^7>").sound("sawtooth").lpf(800).release(1).room(0.6).gain(0.3)

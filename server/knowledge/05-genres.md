@@ -33,7 +33,7 @@ note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85)
 ### Chords/Keys
 FM synth for Rhodes-like electric piano feel:
 ```js
-note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.5)
+chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.5)
 ```
 
 ### Effects Profile
@@ -56,7 +56,7 @@ stack(
   s("808hc*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2"),
   s("808oh ~ ~ ~ 808oh ~ ~ ~").gain(0.3),
   note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85),
-  note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.45).room(0.2)
+  chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.45).room(0.2)
 )
 ```
 
@@ -150,7 +150,7 @@ note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8)
 ### Chords/Keys
 Piano stabs — use `fm` for electric piano feel:
 ```js
-note("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+chord("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
   .room(0.2).delay(0.15)
 ```
 
@@ -174,7 +174,7 @@ stack(
   s("~ cp ~ cp").room(0.25).gain(0.75),
   s("oh*4").gain("[0 .3 0 .3]"),
   note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8),
-  note("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
+  chord("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
     .room(0.25).delay(0.15).delaytime(0.19)
 )
 ```
@@ -209,7 +209,7 @@ note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
 ### Chords/Keys
 Dark atmospheric pads using sawtooth with heavy filtering:
 ```js
-note("<Cm Gm Ab Bb>").sound("sawtooth").voicing().gain(0.3)
+chord("<Cm Gm Ab Bb>").s("sawtooth").voicing().gain(0.3)
   .lpf(1200).room(0.5).size(0.8).release(1)
 ```
 
@@ -234,7 +234,7 @@ stack(
   s("hh*16").gain("[.3 .6 .4 .7]*4").lpf(6000),
   note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
     .lpf(sine.range(150, 800).slow(4)).gain(0.75).distort(0.1),
-  note("<Cm Gm Ab Bb>").sound("sawtooth").voicing().gain(0.25)
+  chord("<Cm Gm Ab Bb>").s("sawtooth").voicing().gain(0.25)
     .lpf(1200).room(0.5).size(0.8).release(1)
 )
 ```
@@ -269,7 +269,7 @@ note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
 ### Chords/Keys
 Rich Rhodes voicings using FM synth:
 ```js
-note("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+chord("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
   .room(0.3).size(0.4).lpf(2500)
 ```
 
@@ -293,7 +293,7 @@ stack(
   s("[hh hh hh hh]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2"),
   note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
     .gain(0.7).lpf(600).release(0.15),
-  note("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
+  chord("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
     .room(0.3).size(0.4).lpf(2500),
   note("<C4 E4 G4 C5>/2").sound("fm").fmi(3).fmh(3.5).gain(0.2).room(0.4).release(0.5)
 )
@@ -327,7 +327,7 @@ note("c2 ~ ~ ~ ~ ~ eb2 ~").sound("sine").gain(0.6).release(0.8).lpf(200)
 ### Chords/Keys
 Lush evolving pads — sawtooth with heavy filtering and reverb:
 ```js
-note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
+chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
   .room(0.8).size(0.95).release(2).gain(0.4)
   .lpf(sine.range(800, 3000).slow(16))
 ```
@@ -343,7 +343,7 @@ note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
 setcps(70/240)
 stack(
   s("bd ~ ~ ~ bd ~ ~ ~").gain(0.45).room(0.4).lpf(200),
-  note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
+  chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
     .room(0.8).size(0.95).release(2).gain(0.35)
     .lpf(sine.range(800, 3000).slow(16)),
   note("<C4 Ab3 F4 G4>/2").sound("fm").fmi(3).fmh(3.5).gain(0.15)
@@ -383,7 +383,7 @@ note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
 ### Chords/Keys
 Detuned Rhodes feel — FM synth with filtering:
 ```js
-note("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
+chord("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
   .lpf(1500).gain(0.4).room(0.3)
 ```
 
@@ -408,7 +408,7 @@ stack(
   s("hh*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2"),
   note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
     .lpf(400).release(0.15).gain(0.65),
-  note("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
+  chord("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
     .lpf(1500).gain(0.4).room(0.3),
   s("noise:1").gain(0.04).lpf(3000).crush(10)
 )

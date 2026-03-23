@@ -63,11 +63,11 @@ Some dirt-samples are tonal and respond to `.note()`:
 
 ```js
 // Electric piano chord progression (replaces gm_epiano1)
-note("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing()
+chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing()
   .release(0.4).room(0.3).gain(0.5)
 
 // Warm pad (replaces gm_pad_warm)
-note("<Cm7 Ab^7 Fm9 G7sus4>").sound("sawtooth").voicing()
+chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
   .lpf(sine.range(600, 2000).slow(16)).release(1.5).room(0.7).gain(0.3)
 
 // Bass line (replaces gm_synth_bass_2)

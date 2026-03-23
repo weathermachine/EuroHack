@@ -101,7 +101,7 @@ note("<Cm7 Fm7>").sound("gm_pad_warm")
 note("c3").sound("gm_trumpet")
 
 // CORRECT — use built-in synths
-note("<Cm7 Fm7>").sound("fm").fmi(1.5).fmh(2).voicing()     // electric piano feel
+chord("<Cm7 Fm7>").sound("fm").fmi(1.5).fmh(2).voicing()     // electric piano feel
 note("c2 e2 g2").sound("sawtooth").lpf(400).release(0.1)     // bass
 note("<Cm7 Ab^7>").sound("sawtooth").lpf(800).release(1).room(0.6)  // pad
 note("c4 e4 g4").sound("triangle").release(0.3)               // flute-like lead
@@ -123,7 +123,33 @@ s("808bd 808sd")
 
 Use the dirt-sample equivalents: `808bd`, `808sd`, `808hc`, `808oh`, `808cy`, `808ht`, `808mt`, `808lt`.
 
-## 9. Don't use `let` or `const` for the final pattern
+## 9. `.voicing()` requires `chord()`, NOT `note()`
+
+The `.voicing()` method looks for the `chord` property on the value. `note()` sets the `note` property, not `chord`. Using `note().voicing()` produces "unknown chord undefined".
+
+```js
+// WRONG — note() doesn't set the chord property
+note("<Cm7 Fm7>").sound("fm").voicing()
+
+// CORRECT — chord() sets the chord property that voicing() needs
+chord("<Cm7 Fm7>").s("fm").fmi(1.5).fmh(2).voicing()
+```
+
+## 10. `piano` is NOT a valid sample name
+
+The sample `piano` does NOT exist in dirt-samples. Use built-in synths or other samples:
+
+```js
+// WRONG
+note("c4 e4 g4").s("piano")
+
+// CORRECT alternatives
+note("c4 e4 g4").s("fm").fmi(1.5).fmh(2)    // FM piano feel
+note("c4 e4 g4").s("casio")                  // Casio keyboard
+note("c4 e4 g4").s("pluck")                  // Plucked sound
+```
+
+## 11. Don't use `let` or `const` for the final pattern
 
 The REPL expects a bare expression as the last statement, not a variable declaration.
 
