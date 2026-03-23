@@ -1,8 +1,11 @@
 declare module '@strudel/web' {
   export function initStrudel(): Promise<void>;
-  export function evaluate(code: string, autoplay?: boolean): Promise<void>;
+  export function evaluate(code: string, autoplay?: boolean): Promise<any>;
   export function hush(): void;
   export function getAudioContext(): AudioContext;
+  export function getPattern(): any;
+  export function getTime(): number;
+  export const Pattern: any;
 }
 
 declare module '@strudel/core' {

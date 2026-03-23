@@ -10,6 +10,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      // Force single instance of strudel packages to prevent
+      // "loaded more than once" issues with @strudel/soundfonts
+      '@strudel/core': path.resolve(__dirname, 'node_modules/@strudel/core'),
+      '@strudel/webaudio': path.resolve(__dirname, 'node_modules/@strudel/webaudio'),
     },
   },
   server: {

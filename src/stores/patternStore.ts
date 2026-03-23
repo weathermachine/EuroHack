@@ -17,11 +17,12 @@ interface PatternStore {
   setLastWorkingCode: (code: string) => void;
 }
 
-const DEFAULT_CODE = `// Welcome to AI Rack
-// Press Ctrl+Enter to evaluate, or chat with the AI below
-s("bd sd:1 [~ bd] sd:2")
-  .speed(1)
-  .gain(0.8)
+const DEFAULT_CODE = `// Welcome to AI Rack — Ctrl+Enter to evaluate
+// Use stack() to layer multiple patterns
+stack(
+  s("bd sd:1 [~ bd] sd:2").gain(0.8),
+  s("hh*8").gain(0.3)
+)
 `;
 
 export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set) => ({

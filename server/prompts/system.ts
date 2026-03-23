@@ -1,4 +1,4 @@
-import { STRUDEL_REFERENCE } from './strudel-ref';
+import { KNOWLEDGE_BASE } from '../knowledge/loader';
 
 export interface PromptContext {
   code: string;
@@ -68,7 +68,7 @@ export function buildSystemMessages(context: PromptContext) {
   return [
     {
       type: 'text' as const,
-      text: `You are an AI music collaborator controlling a live Strudel session with a real-time Canvas 2D visualizer. You modify music patterns and visuals based on user requests.\n\n## Strudel Reference\n${STRUDEL_REFERENCE}\n\n${VIZ_REFERENCE}`,
+      text: KNOWLEDGE_BASE,
       cache_control: { type: 'ephemeral' as const },
     },
     {
@@ -92,16 +92,13 @@ ${ctx.code}
     block += `\n\n### Last Error\n${ctx.error}`;
   }
 
-  block += `\n\n## Rules
-1. Always return COMPLETE working Strudel code via the update_pattern tool (not diffs/patches)
-2. CRITICAL: setcps() is a standalone function. Put it on its own line BEFORE the pattern. NEVER chain it onto a pattern.
-3. The LAST expression must be the pattern — it's what gets played
-4. Preserve elements the user didn't ask to change
-5. Use stack() to layer multiple parts (NOT arrays)
-6. Keep patterns musically coherent — match keys, use complementary rhythms
-7. For visualization changes, use the update_visualization tool with Canvas 2D code (the function body, not the function declaration)
-8. Explain changes briefly in your text response
-9. Double-check your Strudel syntax against the reference before responding — this is a live system, errors stop the music`;
+  block += `\n\n${VIZ_REFERENCE}`;
+
+  block += `\n\n## Reminders
+1. Always return COMPLETE working code via the update_pattern tool — not diffs or patches.
+2. CRITICAL: setcps() is a standalone function. Put it on its own line BEFORE the pattern. NEVER chain it.
+3. The LAST expression must be the pattern — it's what gets played.
+4. Use the update_visualization tool for visual changes (provide the function body, not the declaration).`;
 
   return block;
 }

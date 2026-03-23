@@ -29,12 +29,21 @@ export default function HydraCanvas() {
   const customDrawFn = useVizStore((s) => s.drawFn);
   const vizError = useVizStore((s) => s.error);
 
+  const lastWorkingCode = usePatternStore((s) => s.lastWorkingCode);
+
+  // Clear viz state when playback stops or code changes
   useEffect(() => {
     if (!isPlaying) {
       clearVizEvents();
       laneMapRef.current.clear();
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    // Code changed — clear old lanes so they rebuild from new events
+    clearVizEvents();
+    laneMapRef.current.clear();
+  }, [lastWorkingCode]);
 
   // Sync canvas size
   useEffect(() => {

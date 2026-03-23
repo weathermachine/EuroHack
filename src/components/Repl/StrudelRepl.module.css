@@ -15,6 +15,7 @@
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
   min-height: 28px;
+  flex-shrink: 0;
 }
 
 .label {
@@ -33,10 +34,30 @@
 .editor {
   flex: 1;
   overflow: auto;
+  min-height: 0;
 }
 
 .editor .cm-editor {
   height: 100%;
+}
+
+.drawContainer {
+  position: relative;
+  height: 35%;
+  min-height: 80px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+.drawCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
 }
 
 .errorBar {
@@ -52,6 +73,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .errorIcon {

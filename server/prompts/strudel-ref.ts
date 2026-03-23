@@ -110,9 +110,29 @@ stack(
 sine, sawtooth, square, triangle, fm (with .fmi() and .fmh())
 
 ## Common Samples (use with s() or .s())
+### Dirt-Samples (always available):
 bd (kick), sd (snare), hh (hi-hat), oh (open hat), cp (clap),
 cr (crash), rim (rimshot), mt/ht/lt (toms), cb (cowbell),
 bass, piano, casio, jazz, metal, techno, gabba, jvbass, future
+
+### 808 Drum Machine Samples (from dirt-samples, NOT .bank()):
+808bd (808 kick), 808sd (808 snare), 808hc (808 closed hat),
+808oh (808 open hat), 808cy (808 cymbal), 808mt/808ht/808lt (808 toms),
+808lc (808 low conga), 808mc (808 mid conga)
+Use directly: s("808bd 808sd 808bd 808sd") — do NOT use .bank("RolandTR808")
+
+### GM Soundfont Instruments (via @strudel/soundfonts):
+gm_acoustic_grand_piano, gm_electric_piano_1 (or gm_epiano1), gm_electric_piano_2,
+gm_drawbar_organ, gm_vibraphone, gm_marimba, gm_acoustic_guitar_nylon,
+gm_electric_guitar_clean, gm_acoustic_bass, gm_electric_bass_finger,
+gm_synth_bass_1, gm_synth_bass_2, gm_violin, gm_string_ensemble_1,
+gm_trumpet, gm_french_horn, gm_flute, gm_synth_lead_1_square,
+gm_synth_pad_1_new_age, gm_synth_pad_2_warm
+
+## IMPORTANT: Do NOT use .bank()
+The .bank("RolandTR808") syntax is NOT supported in this environment.
+Instead, use the 808 samples directly: s("808bd") instead of s("bd").bank("RolandTR808")
+Similarly, use GM soundfonts directly: .s("gm_acoustic_grand_piano")
 
 ## Tempo Reference
 - setcps(0.5) = 120 BPM (standard house/techno)
@@ -146,6 +166,21 @@ stack(
   note("<[c2 ~] [~ c2] [c2 ~] [eb2 ~]>").s("sawtooth")
     .lpf(800).resonance(0.3).gain(0.35).room(0.6)
     .attack(0.01).decay(0.1).sustain(0.3).release(0.4)
+)
+\`\`\`
+
+### Hip Hop (87 BPM)
+\`\`\`
+setcps(87/240)
+stack(
+  s("808bd ~ ~ ~ ~ ~ 808bd ~").gain(1.1),
+  s("~ ~ ~ 808sd ~ ~ ~ 808sd").room(0.15).gain(0.95),
+  s("808hc*8").gain("[.4 .7 .5 .8]*1").late("0 .04 0 .04"),
+  note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("gm_synth_bass_2")
+    .gain(1.0).attack(0.01).decay(0.5).sustain(0.8).release(0.3),
+  note("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("gm_electric_piano_1")
+    .struct("x ~ [~ x] ~").room(0.3).gain(0.5)
+    .attack(0.01).release(0.2)
 )
 \`\`\`
 `;
