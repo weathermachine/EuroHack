@@ -1,0 +1,87 @@
+.message {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-chat);
+  line-height: 1.6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 20px;
+}
+
+.collapseToggle {
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  font-size: 10px;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.collapseToggle:hover {
+  color: var(--text-primary);
+}
+
+.user .content {
+  color: var(--text-primary);
+}
+
+.userPrefix {
+  color: var(--accent-cyan);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.assistant .content {
+  color: var(--text-primary);
+  font-weight: 300;
+}
+
+.assistantPrefix {
+  color: var(--accent-green);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.preview {
+  color: var(--text-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-left: 18px;
+  margin-top: 2px;
+}
+
+.timestamp {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streamCursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--accent-amber);
+  animation: blink 0.8s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}

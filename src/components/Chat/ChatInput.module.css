@@ -1,0 +1,58 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.prompt {
+  color: var(--accent-green);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-chat);
+  font-weight: 700;
+  user-select: none;
+  flex-shrink: 0;
+  padding-right: 8px;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-chat);
+  caret-color: var(--accent-amber);
+  line-height: 1.5;
+}
+
+.input::placeholder {
+  color: var(--text-dim);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input:disabled::placeholder {
+  color: var(--text-dim);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--accent-amber);
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+}

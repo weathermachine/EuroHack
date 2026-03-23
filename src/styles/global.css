@@ -1,0 +1,77 @@
+@import './variables.css';
+@import './crt.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-code);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 212, 255, 0.3);
+  color: var(--text-primary);
+}
+
+/* Terminal text glow */
+.terminal-text {
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+}
+
+.terminal-text--active {
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+}
+
+/* Beat-reactive background */
+#root {
+  background: color-mix(
+    in srgb,
+    var(--bg-primary),
+    var(--bg-beat-pulse) calc(var(--beat-intensity) * 100%)
+  );
+  transition: background 50ms ease-out;
+}
+
+/* Panel borders react to beat */
+.panel-border {
+  border-color: color-mix(
+    in srgb,
+    var(--border),
+    var(--accent-green) calc(var(--is-beat) * 100%)
+  );
+  transition: border-color 100ms ease-out;
+}
