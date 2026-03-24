@@ -1,16 +1,18 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { useChatStore, createMessageId } from '@/stores/chatStore';
 import { usePatternStore } from '@/stores/patternStore';
 import { useVizStore } from '@/stores/vizStore';
 import { sendChatMessage } from '@/api/chat';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
 import type { ChatMessage as ChatMessageType, ToolCall } from '@/types/messages';
 import ChatMessage from './ChatMessage';
-import ChatInput from './ChatInput';
+import ChatInput, { type ChatInputHandle } from './ChatInput';
 import styles from './ChatInterface.module.css';
 
 export default function ChatInterface() {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
@@ -25,6 +27,49 @@ export default function ChatInterface() {
   const cps = usePatternStore((s) => s.cps);
   const lastError = usePatternStore((s) => s.lastError);
   const setCode = usePatternStore((s) => s.setCode);
+
+  const { startListening, stopListening, transcript, isListening } = useSpeechToText();
+
+  // Update input with transcript as user speaks
+  useEffect(() => {
+    if (transcript) {
+      console.log('[Chat] Setting transcript:', transcript, 'ref:', !!chatInputRef.current);
+      chatInputRef.current?.setValue(transcript);
+    }
+  }, [transcript]);
+
+  // Keyboard handlers for Ctrl+\ (toggle record) and Ctrl+] (submit)
+  // Using a ref for isListening so the handler always sees current value
+  const isListeningRef = useRef(isListening);
+  isListeningRef.current = isListening;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+\ — toggle recording on/off
+      if (e.ctrlKey && e.key === '\\' && !e.repeat) {
+        e.preventDefault();
+        if (isListeningRef.current) {
+          stopListening();
+        } else {
+          startListening();
+        }
+        return;
+      }
+      // Ctrl+] — stop recording (if active) and submit input
+      if (e.ctrlKey && e.key === ']') {
+        e.preventDefault();
+        if (isListeningRef.current) {
+          stopListening();
+        }
+        // Delay to let final transcript arrive before submitting
+        setTimeout(() => chatInputRef.current?.submit(), 200);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [startListening, stopListening]);
 
   const handleToolCall = useCallback(
     (tool: ToolCall) => {
@@ -197,7 +242,12 @@ export default function ChatInterface() {
         </div>
       )}
 
-      <ChatInput onSubmit={handleSubmit} disabled={isStreaming} />
+      <ChatInput
+        ref={chatInputRef}
+        onSubmit={handleSubmit}
+        disabled={isStreaming}
+        isListening={isListening}
+      />
     </div>
   );
 }

@@ -2,6 +2,20 @@ import { useEffect } from 'react';
 import { useUIStore } from '../stores/uiStore';
 import { usePatternStore } from '../stores/patternStore';
 
+/**
+ * Global keyboard shortcuts for panel navigation and playback control.
+ *
+ * Shortcuts defined here:
+ *   Ctrl+1       — Focus code panel
+ *   Ctrl+2       — Focus viz panel
+ *   Ctrl+3       — Focus chat panel
+ *   Ctrl+.       — Stop playback (hush)
+ *   F11          — Toggle viz fullscreen
+ *
+ * Additional shortcuts defined in ChatInterface.tsx (need ChatInput ref):
+ *   Ctrl+\  (hold) — Start speech recognition; release \ to stop
+ *   Ctrl+]         — Submit current chat input
+ */
 export function useKeyboardShortcuts() {
   const setActivePanel = useUIStore((s) => s.setActivePanel);
   const toggleVizFullscreen = useUIStore((s) => s.toggleVizFullscreen);
