@@ -95,8 +95,8 @@ ${ctx.code}
   block += `\n\n${VIZ_REFERENCE}`;
 
   block += `\n\n## Reminders
-1. NEVER erase the user's existing code. When the user asks to add or change something, take the CURRENT CODE shown above and modify it — add layers, change parameters, swap sounds — but keep everything else intact. Only start from scratch if the user explicitly asks for a completely new pattern.
-2. Always return COMPLETE working code via the update_pattern tool — include the existing code with your modifications applied.
+1. The update_pattern tool REPLACES the entire REPL. Always include the user's existing code with your additions/changes applied. To add a layer: copy the Current Code, insert your new layer into the stack(), return the whole thing. To change something: copy the Current Code, modify the relevant line, return the whole thing. Only generate from scratch if the user asks for something completely new.
+2. NEVER remove layers the user already has unless they explicitly ask. Always append or modify — never strip.
 3. CRITICAL: setcps() is a standalone function. Put it on its own line BEFORE the pattern. NEVER chain it.
 4. The LAST expression must be the pattern — it's what gets played.
 5. Use the update_visualization tool for visual changes (provide the function body, not the declaration).

@@ -106,9 +106,11 @@ stack(
 - \`.segment(n)\` — sample n times per cycle
 - \`.chunk(n, fn)\` — apply fn to chunks
 
-## Local Samples for Melodic Parts (use with .s())
-For melodic parts use: Synth (leads), Stabs (chords/voicings), Bass (basslines), Chords (chord stabs)
-Do NOT use built-in synths (sine, sawtooth, square, triangle, fm) as sound sources.
+## Melodic Sound Sources (use with note().s())
+Built-in synths: sine, sawtooth, square, triangle, fm — all available for basslines, leads, pads.
+FM synth params: .fmi(depth) .fmh(ratio) — controls FM modulation.
+Local samples: Synth (leads), Stabs (chords/voicings), Bass (basslines), Chords (chord stabs)
+Piano: note("c3 e3 g3").s("piano") — Salamander Grand Piano, multi-sampled.
 
 ## Common Samples (use with s() or .s())
 ### Dirt-Samples (always available):
@@ -136,11 +138,10 @@ NEVER use any gm_* sound name.
 ### Dirt-sample tonal instruments (also work for melodies):
 arpy, jvbass, casio, juno, moog, pluck, pad, sax, hoover, stab
 
-## IMPORTANT: Do NOT use .bank(), gm_* names, or built-in synths as sound sources
-The .bank("RolandTR808") syntax is NOT supported in this environment.
-Instead, use the 808 samples directly: s("808bd") instead of s("bd").bank("RolandTR808")
-All gm_* soundfont names are BROKEN — use local samples (Synth, Stabs, Bass, Chords) instead.
-Do NOT use built-in synths (fm, sawtooth, triangle, sine, square) as sound sources — use local samples instead.
+## IMPORTANT: gm_* names are BROKEN
+All gm_* soundfont names are BROKEN — use piano, local samples, built-in synths, or dirt-samples instead.
+.bank() IS supported: s("bd sd hh cp").bank("RolandTR808")
+Built-in synths ARE available: note("c3").s("sawtooth"), note("c3").s("fm").fmi(1.5).fmh(2)
 
 ## Tempo Reference
 - setcps(0.5) = 120 BPM (standard house/techno)

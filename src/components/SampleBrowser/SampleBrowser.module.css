@@ -1,0 +1,88 @@
+.container {
+  height: 100%;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  padding: 4px 0;
+}
+
+.group {
+  /* Top-level expandable group */
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.groupHeader:hover {
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.arrow {
+  display: inline-block;
+  width: 10px;
+  font-size: 8px;
+  transition: transform 0.15s;
+}
+
+.arrowExpanded {
+  transform: rotate(90deg);
+}
+
+.count {
+  color: var(--text-dim);
+  font-weight: 400;
+  margin-left: auto;
+}
+
+.folder {
+  padding-left: 16px;
+}
+
+.folderHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-primary);
+}
+
+.folderHeader:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sample {
+  padding: 2px 8px 2px 36px;
+  cursor: pointer;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sample:hover {
+  background: rgba(0, 255, 65, 0.08);
+  color: var(--text-primary);
+}
+
+.samplePlaying {
+  background: rgba(0, 255, 65, 0.15);
+  color: var(--accent-green);
+}
+
+.loading {
+  padding: 4px 8px 4px 24px;
+  color: var(--text-dim);
+  font-style: italic;
+}

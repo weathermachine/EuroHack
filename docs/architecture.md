@@ -21,6 +21,8 @@
 | **Desktop Build** | electron-builder | Cross-platform packaging |
 | **Music Engine** | `server/engine/` | MusicTheory, PatternGenerator, Transforms — server-side pattern generation |
 | **Visualization** | Canvas 2D + `hydra-synth` | Dual mode: Events (Canvas 2D event display) + Hydra (GPU shaders) |
+| **Sample Browser** | `src/components/SampleBrowser/` | Browsable tree of local + CDN samples with click-to-preview |
+| **Active Highlight** | `src/components/Repl/activeHighlight.ts` | Notes/beats flash green in editor via `hap.context.locations` |
 | **Testing** | Vitest + Playwright | Unit + E2E |
 | **Linting** | ESLint + Prettier | Consistent code style |
 
@@ -41,6 +43,8 @@ ai-rack/
 │   └── electron-builder.yml  # Packaging config
 ├── server/
 │   ├── index.ts              # Express server entry
+│   ├── buildSampleIndex.ts   # Rebuilds public/samples/index.json on startup
+│   ├── buildTemplateKnowledge.ts # Rebuilds knowledge/12-templates.md from templates/*.js
 │   ├── routes/
 │   │   ├── chat.ts           # POST /api/chat — Claude proxy
 │   │   └── engine.ts         # REST API for music engine (/api/engine/*)
@@ -49,6 +53,11 @@ ai-rack/
 │   │   ├── MusicTheory.ts     # Scales, chords, progressions, arpeggios, euclidean rhythms
 │   │   ├── PatternGenerator.ts# Drum/bass/melody/complete pattern generation
 │   │   └── Transforms.ts      # Mood shifting, energy levels, refinements, effects
+│   ├── knowledge/             # AI knowledge files injected into system prompts
+│   │   ├── loader.ts          # Knowledge file loader
+│   │   ├── 01-role.md … 10-mcp-tools.md  # Domain expertise files
+│   │   ├── 11-advanced-techniques.md      # Advanced Strudel patterns
+│   │   └── 12-templates.md               # Auto-generated from templates/*.js
 │   ├── prompts/
 │   │   ├── system.ts         # System prompt builder
 │   │   └── strudel-ref.ts    # Strudel reference (cached)
@@ -64,6 +73,7 @@ ai-rack/
 │   │   │   ├── StrudelRepl.tsx       # CodeMirror + eval
 │   │   │   ├── useStrudel.ts         # Strudel lifecycle hook
 │   │   │   ├── strudelHighlight.ts   # CM syntax highlighting
+│   │   │   ├── activeHighlight.ts    # Live note/beat green flash via hap.context.locations
 │   │   │   └── widgets/
 │   │   │       ├── WaveformWidget.ts     # Inline sample waveform
 │   │   │       ├── PatternGrid.ts        # Step-sequencer dots
@@ -81,6 +91,9 @@ ai-rack/
 │   │   │   ├── ChatMessage.tsx       # Single message rendering
 │   │   │   ├── ChatInput.tsx         # λ> input with history
 │   │   │   └── CodeBlock.tsx         # Syntax-highlighted block + [▶] inject button
+│   │   ├── SampleBrowser/
+│   │   │   ├── SampleBrowser.tsx     # Browsable tree of local + CDN samples
+│   │   │   └── SampleBrowser.module.css
 │   │   └── StatusBar/
 │   │       └── StatusBar.tsx         # BPM, key, transport, CPU, timer
 │   ├── stores/
@@ -105,6 +118,12 @@ ai-rack/
 │   └── types/
 │       ├── strudel.d.ts      # Strudel type augmentations
 │       └── messages.ts       # Chat message types
+├── templates/
+│   ├── techno_template.js    # Genre templates (Techno, House, DnB, Hip Hop, Soul)
+│   ├── house_template.js
+│   ├── drum_and_bass_template.js
+│   ├── hip_hop_template.js
+│   └── soul_template.js
 ├── public/
 │   ├── fonts/                # JetBrains Mono woff2
 │   └── samples/              # Local sample library (WAV files + index.json manifest)
@@ -129,6 +148,7 @@ ai-rack/
       │     └── <VizControls />    ← Shader preset dropdown (hydra mode only)
       └── <ChatInterface />        ← message list + input
     </PanelLayout>
+    <SampleBrowser />              ← bottom-right, browsable sample tree
     <StatusBar />                  ← fixed bottom row
   </AudioReactiveProvider>
 </App>
@@ -149,6 +169,8 @@ ai-rack/
 **`VizControls`** — Dropdown selector for Hydra shader presets (from `shaderPresets.ts`). Only visible when `vizMode === 'hydra'`.
 
 **`ChatInterface`** — Uses React Virtuoso for virtualized message list. Streams AI responses token-by-token with typewriter animation. Code blocks render with syntax highlighting and `[▶]` button that injects code into the REPL store.
+
+**`SampleBrowser`** — Bottom-right panel displaying all local samples and dough-samples CDN packs in a browsable tree. Click any sample to preview it. Loaded from `public/samples/index.json` (local) and the dough-samples CDN manifest.
 
 **`StatusBar`** — Reads from `patternStore` (BPM, playing state) and `audioStore` (CPU usage). Beat-reactive scale animation on BPM display via Framer Motion.
 
@@ -255,7 +277,7 @@ interface VizStore {
 
 ## 5. Backend Architecture
 
-Express server handling Claude API proxying with state injection, plus a music engine API for pattern generation and transformation.
+Express server handling Claude API proxying with state injection, plus a music engine API for pattern generation and transformation. On startup, auto-runs `buildSampleIndex()` (rebuilds `public/samples/index.json`) and `buildTemplateKnowledge()` (rebuilds `server/knowledge/12-templates.md` from `templates/*.js`).
 
 ### Routes
 
@@ -330,7 +352,7 @@ The chat route exposes these as Anthropic API tools that Claude can call directl
 - `shift_mood` — Transform pattern mood (dark, bright, melancholic, etc.)
 - `set_energy` — Adjust energy level (0–10)
 
-All generated patterns use **local samples only** (Kicks, Snares, ClosedHats, OpenHats, Crashes, Claps, Bass, Synth, Stabs, Chords, Vox) — never dirt-samples, GM soundfonts, or bank samples.
+Generated patterns can use local samples (Kicks, Snares, ClosedHats, etc.), dough-samples CDN packs (dirt-samples, Tidal Drum Machines, Piano, VCSL, EmuSP12, Mridangam via `https://raw.githubusercontent.com/felixroos/dough-samples/main/`), built-in synths (`sine`, `sawtooth`, `square`, `triangle`, `fm`), and `.bank()` calls (e.g. `s("bd sd hh cp").bank("RolandTR808")`). Only `gm_*` soundfonts are broken.
 
 ### SSE Proxy Flow
 

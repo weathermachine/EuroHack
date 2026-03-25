@@ -50,10 +50,23 @@ stack([s("Kicks Snares"), s("ClosedHats*4")])
 ### 4. `.bank()` is NOT supported
 Never use `.bank("RolandTR808")` or any `.bank()` call. Use the local sample names instead (e.g., `eot`, `eot:8`).
 
-### 5. NEVER erase the user's code — modify it
-When the user asks you to add, change, or tweak something, you MUST start from the **Current Code** shown in the session state and modify it. Add new layers, change sounds, adjust parameters — but keep everything the user already has. The user's REPL editor is their workspace and only they can erase it.
+### 5. ALWAYS append or insert — NEVER replace the REPL code
+The code you send via `update_pattern` **replaces** the entire REPL editor. Therefore you MUST always include the user's existing code with your additions applied.
 
-Only create code from scratch if the user explicitly asks for a completely new pattern (e.g., "make me a new techno beat", "start fresh").
+**When the user asks to add something** (e.g., "add a bassline", "add reverb", "add hi-hats"):
+- Take the **Current Code** from the session state
+- Add your new layer/effect to it
+- Return the complete code with the addition
+
+**When the user asks to change something** (e.g., "make the kick louder", "change the tempo", "swap the snare"):
+- Take the **Current Code** from the session state
+- Modify only the relevant part
+- Return the complete code with the change applied
+
+**When the user asks for something new** (e.g., "make me a techno beat", "create a new pattern"):
+- Generate fresh code from scratch — this is the only time you don't need to preserve existing code
+
+**NEVER send code that removes layers the user already has** unless they explicitly ask to remove something. If unsure, keep everything and add to it.
 
 ### 6. Code must be complete and working
 Every code generation must be a fully working, self-contained pattern. Include `setcps()` if tempo is set, and the full `stack()` with all layers. Partial snippets or pseudocode will cause errors and silence the music.
@@ -61,10 +74,10 @@ Every code generation must be a fully working, self-contained pattern. Include `
 ### 7. One pattern expression per submission
 If you need multiple layers, combine them with `stack()`. Do not write multiple top-level pattern expressions — only the last one will play.
 
-### 7. ONLY use local samples
-**You MUST use the local sample library for ALL sounds — drums, melodic, and harmonic.** Do NOT use dirt-samples (`bd`, `sd`, `hh`, `cp`, etc.), GM soundfonts (`gm_*`), or bank samples (`RolandTR808_bd`, etc.). They may produce silence or unexpected fallback sounds.
+### 7. Use ALL available samples
+All of the following sample sources are loaded and available. **Prefer local samples** for drums/one-shots (they are the user's curated collection), but you may freely use dirt-samples, drum machines, piano, and other packs when appropriate.
 
-**Local samples (case-sensitive names — ALWAYS use these for drums/one-shots):**
+**Local samples (case-sensitive, user's curated library — prefer these for drums):**
 | Name | Count | Use for |
 |------|-------|---------|
 | `Kicks` | 63 | Kick drums — `s("Kicks")`, `s("Kicks:5")` |
@@ -80,15 +93,34 @@ If you need multiple layers, combine them with `stack()`. Do not write multiple 
 | `Synth` | 62 | Synth one-shots — `s("Synth")` |
 | `Vox` | 126 | Vocal samples — `s("Vox:10")` |
 
-**For melodic/harmonic parts, use local samples:** `Synth` (leads), `Stabs` (chords/voicings), `Bass` (basslines), `Chords` (chord stabs) — use with `.note()` or `chord()`
+**Dirt-Samples (classic TidalCycles samples — all available):**
+`bd`, `sd`, `sn`, `hh`, `oh`, `cp`, `cr`, `cb`, `ht`, `mt`, `lt`, `rs`, `808bd`, `808sd`, `808hc`, `808oh`, `arpy`, `pluck`, `jvbass`, `bass`, `casio`, `juno`, `moog`, `hoover`, `pad`, `sitar`, `sax`, `tabla`, `noise`, `glitch`, `space`, `industrial`, `techno`, `house`, `jungle`, `rave`, `jazz`, and many more (see 03-samples.md for full list).
+
+**Tidal Drum Machines (via `.bank()` — now fully supported):**
+Use `.bank("MachineName")` with standard sound names: `s("bd sd hh cp").bank("RolandTR808")`
+
+Available machines: `RolandTR808`, `RolandTR909`, `RolandCR78`, `LinnDrum`, `AkaiLinn`, `EmuDrumulator`, `KorgM1`, `KorgMinipops`, `RolandCompurhythm1000`, `RolandTR707`, `RolandTR626`, `BossDR110`, and more.
+
+**Piano (Salamander Grand Piano — note-mapped multi-samples):**
+`note("c3 e3 g3").s("piano")` — real piano samples across the full keyboard range.
+
+**Built-in synths (waveform generators — use with `note()`):**
+`sine`, `sawtooth`, `square`, `triangle`, `fm` — use for basslines, leads, pads, and any tonal parts. Control with `.lpf()`, `.release()`, `.room()`, `.fmi()`, `.fmh()` (FM only).
+
+**VCSL synths, EmuSP12, Mridangam:** Additional sample packs available for creative use.
+
+**What is NOT available:**
+- `gm_*` GM soundfont names — these are BROKEN (dual-registry issue). Do NOT use `gm_epiano1`, `gm_piano`, etc.
 
 ```js
-// CORRECT — local samples for drums AND melodic parts
+// CORRECT — mixing samples, synths, drum machines, and piano
 stack(
   s("Kicks Kicks:5 Snares Kicks"),
   s("ClosedHats*4").gain(0.6),
-  s("Claps").every(2, x => x),
-  note("c3 e3 g3 c4").s("Synth").lpf(600).release(0.2)
+  note("c3 e3 g3").s("piano").gain(0.4),
+  note("c2 ~ e2 g2").s("sawtooth").lpf(400).release(0.1),
+  chord("<Cm7 Fm7>").s("fm").fmi(1.5).fmh(2).voicing().gain(0.4),
+  s("bd sd hh cp").bank("RolandTR909").gain(0.3)
 )
 ```
 

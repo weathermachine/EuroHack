@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { StrudelRepl } from '../Repl/StrudelRepl';
 import HydraCanvas from '../Viz/HydraCanvas';
 import ChatInterface from '../Chat/ChatInterface';
+import SampleBrowser from '../SampleBrowser/SampleBrowser';
 import styles from './PanelLayout.module.css';
 
 export default function PanelLayout() {
@@ -47,15 +48,28 @@ export default function PanelLayout() {
           className={`${styles.resizeHandle} ${styles.resizeHandleVertical}`}
         />
 
-        {/* Bottom: Chat */}
+        {/* Bottom: Chat + Sample Browser */}
         <Panel defaultSize={25} minSize={15}>
-          <div
-            className={`${styles.panel} panel-border`}
-            onClick={() => setActivePanel('chat')}
-          >
-            <div className={styles.panelHeader}>Chat</div>
-            <ChatInterface />
-          </div>
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize={70} minSize={30}>
+              <div
+                className={`${styles.panel} panel-border`}
+                onClick={() => setActivePanel('chat')}
+              >
+                <div className={styles.panelHeader}>Chat</div>
+                <ChatInterface />
+              </div>
+            </Panel>
+            <PanelResizeHandle
+              className={`${styles.resizeHandle} ${styles.resizeHandleHorizontal}`}
+            />
+            <Panel defaultSize={30} minSize={15}>
+              <div className={`${styles.panel} panel-border`}>
+                <div className={styles.panelHeader}>Samples</div>
+                <SampleBrowser />
+              </div>
+            </Panel>
+          </PanelGroup>
         </Panel>
       </PanelGroup>
     </div>

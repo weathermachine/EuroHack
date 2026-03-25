@@ -48,10 +48,31 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 
 ### Audio Engine (src/audio/)
 
-- `engine.ts` — Strudel init, sample loading (local samples from `public/samples/`), pattern evaluation
+- `engine.ts` — Strudel init, sample loading (local samples from `public/samples/` + dough-samples CDN), pattern evaluation
 - `analyzer.ts` — AnalyserNode + Meyda feature extraction
 - `reactive.ts` — rAF loop bridging audio features to CSS custom properties
 - Single AudioContext shared by Strudel and analysis. Meyda runs on main thread (~0.1ms/frame).
+
+**Sample sources:** Local samples from `public/samples/`, plus 6 dough-samples packs loaded from `https://raw.githubusercontent.com/felixroos/dough-samples/main/` (Dirt-Samples, Tidal Drum Machines, Piano, VCSL, EmuSP12, Mridangam). The old shabda.ndre.gr bank loading and broken GM soundfont loading have been removed. Built-in synths (`sine`, `sawtooth`, `square`, `triangle`, `fm`) are also available as sound sources, with `.fmi()` and `.fmh()` for FM synthesis. `.bank("RolandTR808")` etc. works via the Tidal Drum Machines pack. Only `gm_*` soundfonts are broken; everything else works.
+
+### Sample Browser (src/components/SampleBrowser/)
+
+Bottom-right panel showing all local samples and dough-samples packs in a browsable tree. Click any sample to preview it.
+
+### Active REPL Highlighting (src/components/Repl/activeHighlight.ts)
+
+Notes and beats flash green in the CodeMirror editor as they trigger, using `hap.context.locations` from Strudel's transpiler.
+
+### Auto-Regeneration on Server Startup
+
+- `server/buildSampleIndex.ts` — Rebuilds `public/samples/index.json` from the local sample folders.
+- `server/buildTemplateKnowledge.ts` — Rebuilds `server/knowledge/12-templates.md` from `templates/*.js` files.
+
+Both run automatically when the Express server starts.
+
+### Genre Templates (templates/)
+
+5 genre templates (Techno, House, DnB, Hip Hop, Soul) in `templates/` folder. Auto-loaded into the AI knowledge base as `server/knowledge/12-templates.md` via the build script above.
 
 ### Error Recovery
 
@@ -59,7 +80,9 @@ Failed evaluations keep the previous pattern playing. AI-triggered errors get se
 
 ## Local Samples
 
-User's custom sample library lives in `public/samples/` with subfolders: `eot` (808s), `Bass`, `Chords`, `Claps`, `ClosedHats`, `Crashes`, `Kicks`, `OpenHats`, `Snares`, `Stabs`, `Synth`, `Vox`. Files are named `FolderName_N.wav`. A manifest at `public/samples/index.json` maps folders to file arrays — regenerate it if samples are added/removed. Loaded in `engine.ts` via `loadLocalSamples()`. Names are **case-sensitive** in Strudel (use `Kicks` not `kicks`).
+User's custom sample library lives in `public/samples/` with subfolders: `eot` (808s), `Bass`, `Chords`, `Claps`, `ClosedHats`, `Crashes`, `Kicks`, `OpenHats`, `Snares`, `Stabs`, `Synth`, `Vox`. Files are named `FolderName_N.wav`. A manifest at `public/samples/index.json` maps folders to file arrays — auto-regenerated on server startup by `server/buildSampleIndex.ts`. Loaded in `engine.ts` via `loadLocalSamples()`. Names are **case-sensitive** in Strudel (use `Kicks` not `kicks`).
+
+In addition to local samples, dough-samples CDN packs (Dirt-Samples, Tidal Drum Machines, Piano, VCSL, EmuSP12, Mridangam) are available. Use `.bank("RolandTR808")` etc. for drum machine packs. Built-in synths (`sine`, `sawtooth`, `square`, `triangle`, `fm`) work as sound sources. Both `setcpm(bpm/4)` and `setcps(bpm/240)` are valid for setting tempo.
 
 ## Music Engine (server/engine/)
 
@@ -72,7 +95,7 @@ Exposed via:
 1. **Anthropic API tools** in `server/routes/chat.ts` — the in-app AI calls `generate_pattern`, `generate_drums`, `shift_mood`, etc. and the server executes them, converting results to `update_pattern` events
 2. **REST API** at `server/routes/engine.ts` — direct endpoints like `POST /api/engine/generate-drums`, `/api/engine/transform`, `/api/engine/scale`, etc. for frontend use
 
-All generated patterns use local samples only (Kicks, Snares, ClosedHats, etc.) and correct Strudel syntax (colon scales, `setcps(bpm/240)`).
+All generated patterns use local samples (Kicks, Snares, ClosedHats, etc.), dough-samples CDN packs (dirt-samples, drum machine banks, piano), and built-in synths (`sine`, `sawtooth`, `square`, `triangle`, `fm`). Correct Strudel syntax with `setcps(bpm/240)` or `setcpm(bpm/4)`. Only `gm_*` soundfonts are broken; everything else works.
 
 ## Strudel Package Deduplication
 

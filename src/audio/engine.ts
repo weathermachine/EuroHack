@@ -1,6 +1,7 @@
 import { usePatternStore } from '@/stores/patternStore';
 import { pushVizEvent, clearVizEvents } from './vizEvents';
 import { createAnalyzer, startAnalysis } from './analyzer';
+import { pushHighlight } from '@/components/Repl/activeHighlight';
 
 let initialized = false;
 let strudelRepl: any = null;
@@ -36,43 +37,20 @@ export async function initAudio(): Promise<void> {
   // Load sample sources. All via evaluate() so they register in
   // Strudel's own sound registry (same scope as the audio engine).
 
-  // 1. Dirt-Samples: bd, sd, hh, cp, 808bd, 808sd, etc.
-  await evaluate(`samples('github:tidalcycles/dirt-samples')`, false);
+  // 1. dough-samples: comprehensive sample packs via CDN (lazy-loaded on first use)
+  //    Includes: Dirt-Samples, Tidal Drum Machines (TR-808, TR-909, LinnDrum, etc.),
+  //    Salamander Grand Piano, VCSL synths, Mridangam, EmuSP12
+  await loadDoughSamples(evaluate);
 
-  // 1b. Local user samples from public/samples/
-  //     Loaded from a pre-built index.json manifest so we don't need directory listing.
-  //     Usage: s("Kicks"), s("Kicks:3"), s("Bass:12"), etc.
+  // 2. Local user samples from public/samples/
+  //    Loaded from a pre-built index.json manifest (rebuilt on server start).
+  //    Usage: s("Kicks"), s("Kicks:3"), s("Bass:12"), etc.
   await loadLocalSamples(evaluate);
-
-  // 2. GM Soundfonts: gm_epiano1, gm_trumpet, gm_string_ensemble1, etc.
-  //    Must be loaded via @strudel/soundfonts's registerSoundfonts() BUT called
-  //    through evaluate so it registers in the correct sound registry.
-  //    We import the raw font data and register each sound manually.
-  try {
-    const sf = await import('@strudel/soundfonts');
-    // registerSoundfonts calls registerSound from @strudel/webaudio.
-    // Due to bundle duplication, we need to get registerSound from the same
-    // scope as @strudel/web. We do this by making it available globally
-    // and calling it from evaluate.
-    (globalThis as any).__soundfontData = (sf as any).default || sf;
-    // Actually, let's just call registerSoundfonts and see if it works
-    // now that packages are deduped
-    sf.registerSoundfonts();
-    console.log('[AI Rack] GM soundfonts registered');
-  } catch (e) {
-    console.warn('[AI Rack] Soundfonts failed:', e);
-  }
-
-  // 3. Bank samples for .bank() usage (RolandTR808, RolandTR909, etc.)
-  //    The .bank("X") system constructs sound names as "X_samplename".
-  //    These need to be registered as individual sounds.
-  //    We load them by fetching the bank's sample map and registering each entry.
-  await loadBankSamples(evaluate);
 
   // Override punchcard/spiral to use .draw()
   await patchVisualizationMethods();
 
-  // Register viz trigger
+  // Register viz trigger + REPL highlight trigger
   (globalThis as any).__vizTrigger = (hap: any, _deadline: number, duration: number) => {
     const v = hap.value || hap;
     pushVizEvent({
@@ -87,6 +65,12 @@ export async function initAudio(): Promise<void> {
       speed: v.speed,
       note: v.note ?? v.freq,
     });
+
+    // Push source locations to REPL highlight system
+    const locations = hap.context?.locations;
+    if (locations && locations.length > 0) {
+      pushHighlight(locations, duration ?? 0.2);
+    }
   };
 
   initialized = true;
@@ -132,58 +116,49 @@ function installAudioTap(getAudioContext: () => AudioContext) {
 }
 
 /**
- * Load bank sample maps and register each sample with the bank prefix.
- * E.g., RolandTR808 bank with samples bd, sd, hh → registers RolandTR808_bd, etc.
+ * Load all dough-samples packs from GitHub CDN.
+ * Each pack has a JSON manifest that maps sound names to file URLs.
+ * Samples are lazy-loaded by the browser on first use — only downloads what's played.
+ *
+ * Packs:
+ *   - Dirt-Samples: bd, sd, hh, cp, 808bd, arpy, pluck, etc.
+ *   - Tidal Drum Machines: TR-808, TR-909, CR-78, LinnDrum, etc. via .bank()
+ *   - Piano: Salamander Grand Piano (piano, gm_acoustic_grand_piano)
+ *   - VCSL: Synth samples
+ *   - Mridangam: Indian percussion
+ *   - EmuSP12: Classic sampler
  */
-async function loadBankSamples(evaluate: (code: string, autoplay?: boolean) => Promise<any>) {
-  const banks = [
-    'RolandTR808', 'RolandTR909', 'RolandCR78',
-    'AkaiLinn', 'EmuSP12',
+async function loadDoughSamples(evaluate: (code: string, autoplay?: boolean) => Promise<any>) {
+  const ds = 'https://raw.githubusercontent.com/felixroos/dough-samples/main';
+
+  const packs = [
+    { name: 'Dirt-Samples', json: `${ds}/Dirt-Samples.json` },
+    { name: 'Tidal Drum Machines', json: `${ds}/tidal-drum-machines.json` },
+    { name: 'Piano', json: `${ds}/piano.json` },
+    { name: 'VCSL', json: `${ds}/vcsl.json` },
+    { name: 'EmuSP12', json: `${ds}/EmuSP12.json` },
+    { name: 'Mridangam', json: `${ds}/mridangam.json` },
   ];
 
-  for (const bank of banks) {
-    try {
-      const res = await fetch(`https://shabda.ndre.gr/${bank}.json?strudel=1`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const base = data._base || `https://shabda.ndre.gr/`;
-
-      // The shabda format: { "BankName": ["path/to/file.wav", ...], "_base": "..." }
-      // But .bank() expects "BankName_bd", "BankName_sd" etc.
-      // The samples in the array are numbered (0, 1, 2...) not named (bd, sd, hh).
-      // So .bank("RolandTR808") with s("bd") looks for "RolandTR808_bd" which doesn't exist.
-      //
-      // The actual strudel.cc website uses a different sample loading approach for banks.
-      // The bank samples on strudel.cc are loaded from a comprehensive prebake that
-      // maps bank_sound names to URLs.
-      //
-      // For compatibility, let's create the expected mappings from the bank's file list.
-      // The files are named like "RolandTR808_BD.wav", "RolandTR808_SD.wav" etc.
-      const files = data[bank];
-      if (!Array.isArray(files)) continue;
-
-      // Build a sample map with proper names
-      const sampleMap: Record<string, string[]> = {};
-      for (const file of files) {
-        // Extract sound name from filename, e.g. "samples/RolandTR808/RolandTR808_BD.wav" → "bd"
-        const filename = file.split('/').pop()?.replace(/\.\w+$/, '') || '';
-        // Files named like "RolandTR808_BD" → key should be "RolandTR808_bd"
-        const key = filename.toLowerCase();
-        if (!sampleMap[key]) sampleMap[key] = [];
-        sampleMap[key].push(file);
+  // Load all packs concurrently for faster startup
+  const results = await Promise.allSettled(
+    packs.map(async (pack) => {
+      try {
+        await evaluate(`samples('${pack.json}')`, false);
+        return pack.name;
+      } catch (e) {
+        console.warn(`[AI Rack] Failed to load ${pack.name}:`, e);
+        return null;
       }
+    })
+  );
 
-      // Also map without bank prefix for convenience
-      // "RolandTR808_bd" → also register as bank entry
-      sampleMap._base = [base] as any;
+  const loaded = results
+    .filter((r): r is PromiseFulfilledResult<string | null> => r.status === 'fulfilled')
+    .map(r => r.value)
+    .filter(Boolean);
 
-      (globalThis as any).__bankMap = sampleMap;
-      await evaluate(`samples(__bankMap, '${base}')`, false);
-      console.log(`[AI Rack] Bank ${bank} registered (${Object.keys(sampleMap).length - 1} sounds)`);
-    } catch {
-      // Non-fatal
-    }
-  }
+  console.log(`[AI Rack] Dough samples loaded: ${loaded.join(', ')} (${loaded.length}/${packs.length} packs)`);
 }
 
 /**

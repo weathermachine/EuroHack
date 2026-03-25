@@ -2,6 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import chatRouter from './routes/chat';
 import engineRouter from './routes/engine';
+import { buildSampleIndex } from './buildSampleIndex';
+import { buildTemplateKnowledge } from './buildTemplateKnowledge';
+
+// Rebuild manifests on startup so new samples/templates are picked up automatically
+buildSampleIndex();
+buildTemplateKnowledge();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

@@ -1,10 +1,12 @@
-# Sample Catalog — CONFIRMED AVAILABLE (dirt-samples)
+# Sample Catalog — ALL AVAILABLE SAMPLES
 
-All samples below are loaded from the `tidalcycles/dirt-samples` GitHub repository via the REPL's `samples()` function. They are **confirmed available** and guaranteed to work.
+All samples below are loaded at startup from multiple sources: local samples, Dirt-Samples, Tidal Drum Machines, Piano, VCSL, EmuSP12, and Mridangam. Samples are lazy-loaded (downloaded on first use).
 
 Use `:n` to select variants (0-indexed). Example: `s("bd:3")` plays the 4th bd variant.
 
-**IMPORTANT: Do NOT use `.bank()`. Do NOT use `gm_*` soundfont names (they are NOT loaded — see 04-soundfonts.md). All samples below are accessed directly by name in `s()`.**
+**`.bank()` IS supported** for Tidal Drum Machines. Example: `s("bd sd hh cp").bank("RolandTR808")`
+
+**Do NOT use `gm_*` soundfont names** — they are broken. Use `piano` for piano, local samples for synths/stabs.
 
 ## Core Drum Kit (dirt-samples)
 
@@ -159,22 +161,24 @@ These are your **primary melodic/harmonic tools**.
 
 ## Melodic/Harmonic Samples
 
-For melodic and harmonic parts, use local samples instead of GM soundfonts or built-in synths:
-
-| Name | Variants | Best for |
-|------|----------|----------|
-| `Synth` | 62 | Leads, melodies, soft textures |
-| `Stabs` | 79 | Chords, voicings, stabs |
-| `Bass` | 46 | Basslines, sub-bass |
-| `Chords` | 270 | Chord stabs, progressions |
+| Name | Source | Best for |
+|------|--------|----------|
+| `piano` | Salamander Grand Piano | Real piano — `note("c3 e3 g3").s("piano")` |
+| `Synth` | Local (62 variants) | Leads, melodies, soft textures |
+| `Stabs` | Local (79 variants) | Chords, voicings, stabs |
+| `Bass` | Local (46 variants) | Basslines, sub-bass |
+| `Chords` | Local (270 variants) | Chord stabs, progressions |
+| `arpy` | Dirt-Samples (11) | Arpeggiated synth, great for melodies |
+| `pluck` | Dirt-Samples (17) | Plucked string sounds |
+| `casio` | Dirt-Samples (3) | Casio keyboard tones |
+| `juno` | Dirt-Samples (12) | Juno synth patches |
 
 ```js
-// Use these INSTEAD of gm_epiano1, gm_piano, gm_synth_bass_2, etc.
-// Chord progression:
-chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing().gain(0.5)
+// Piano:
+note("c3 e3 g3 b3").s("piano").gain(0.5)
 
-// Pad/chord layer:
-note("<Cm7 Ab^7>").s("Chords").lpf(800).release(1).room(0.6).gain(0.3)
+// Chord voicings:
+chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing().gain(0.5)
 
 // Bass:
 note("c2 ~ e2 g2").s("Bass").lpf(400).release(0.1).gain(0.8)
@@ -182,6 +186,26 @@ note("c2 ~ e2 g2").s("Bass").lpf(400).release(0.1).gain(0.8)
 // Warm lead:
 note("c4 e4 g4 c5").s("Synth").release(0.3).room(0.3)
 ```
+
+## Tidal Drum Machines (via `.bank()`)
+
+Use `.bank("MachineName")` with standard drum sound names (`bd`, `sd`, `hh`, `cp`, `oh`, etc.):
+
+```js
+// Classic TR-808 beat
+s("bd sd:1 hh cp").bank("RolandTR808")
+
+// TR-909 techno kick pattern
+s("bd*4").bank("RolandTR909")
+
+// Layer different machines
+stack(
+  s("bd sd bd [sd bd]").bank("RolandTR909"),
+  s("hh*8").bank("RolandTR808").gain(0.5)
+)
+```
+
+Available machines include: `RolandTR808`, `RolandTR909`, `RolandCR78`, `RolandTR707`, `RolandTR626`, `LinnDrum`, `AkaiLinn`, `EmuDrumulator`, `BossDR110`, `KorgM1`, `KorgMinipops`, `RolandCompurhythm1000`, and more.
 
 ## Local Sample Library (Custom Samples)
 
@@ -227,30 +251,30 @@ stack(
 )
 ```
 
-### IMPORTANT: ALWAYS use local samples
+### Sample priority guide
 
-**You MUST use local samples for ALL drum and one-shot sounds.** Do NOT use dirt-samples (`bd`, `sd`, `hh`, etc.) — they are loaded but should NOT be used. The local library is the user's curated collection and is the only approved source for samples.
+**Prefer local samples** for drums and one-shots — they're the user's curated collection. Use dirt-samples, drum machines, and other packs when you need specific sounds.
 
-**Mapping from dirt-samples to local samples:**
-| Instead of (dirt-sample) | Use (local sample) |
-|--------------------------|---------------------|
-| `bd`, `bassdm`, `clubkick` | `Kicks` |
-| `sd`, `sn` | `Snares` |
-| `hh`, `linnhats` | `ClosedHats` |
-| `oh` | `OpenHats` |
-| `cp` | `Claps` |
-| `cr` | `Crashes` |
-| `808bd`, `808sd`, `808hc` | `eot` |
-| `bass`, `jvbass`, `jungbass` | `Bass` |
-| `stab`, `hoover` | `Stabs` |
-| `arpy`, `casio`, `juno`, `moog` | `Synth` |
-| `mouth`, `speech`, `yeah` | `Vox` |
+| For this | First choice | Also available |
+|----------|-------------|----------------|
+| Kicks | `Kicks` (local) | `bd` (dirt), `.bank("RolandTR808")` |
+| Snares | `Snares` (local) | `sd`, `sn` (dirt), `.bank("RolandTR909")` |
+| Hi-hats | `ClosedHats`/`OpenHats` (local) | `hh`, `oh` (dirt) |
+| Claps | `Claps` (local) | `cp` (dirt) |
+| Bass | `Bass` (local) | `jvbass`, `bass` (dirt) |
+| Piano | `piano` (Salamander) | — |
+| Synth leads | `Synth` (local) | `arpy`, `pluck` (dirt) |
+| Chord stabs | `Stabs`/`Chords` (local) | `casio`, `juno` (dirt) |
+| Vocals | `Vox` (local) | `mouth`, `speech` (dirt) |
+| Tabla/world | `tabla`, `mridangam` (dirt/dough) | — |
+| Vintage machines | `.bank("RolandTR808")` etc. | `808bd` (dirt) |
 
 ## Tips
 
 - Start with low variant numbers (`:0`, `:1`) — they're usually the cleanest
 - Use `n()` to cycle through variants: `s("Kicks").n("0 3 5 12")`
-- Layer kicks for weight: `stack(s("Kicks:0"), s("eot:5").gain(0.6))`
+- Layer kicks for weight: `stack(s("Kicks:0"), s("bd:5").gain(0.4))`
 - `eot` samples are great for hip hop and trap — they have long tails, use `.cut(1)` to manage
-- **For chords/melodies**: Use `Stabs` (chords/voicings), `Synth` (leads), `Bass` (basslines), `Chords` (chord stabs) with `.note()` or `chord()`
-- **NEVER use `gm_*` names, dirt-sample names, or built-in synths (`fm`, `sawtooth`, `sine`, `square`, `triangle`)**
+- For piano: `note("c3 e3 g3").s("piano")` — multi-sampled, sounds great
+- `.bank()` works with standard names: `s("bd sd hh cp").bank("RolandTR909")`
+- **NEVER use `gm_*` names** — they are broken

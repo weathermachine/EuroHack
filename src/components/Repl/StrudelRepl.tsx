@@ -4,6 +4,7 @@ import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { basicSetup } from 'codemirror';
 import { strudelHighlight } from './strudelHighlight';
+import { activeHighlightExtension, startHighlightLoop, stopHighlightLoop, clearHighlights } from './activeHighlight';
 import { useStrudel } from './useStrudel';
 import { usePatternStore } from '@/stores/patternStore';
 import styles from './StrudelRepl.module.css';
@@ -75,13 +76,15 @@ export const StrudelRepl: React.FC = () => {
       extensions: [
         basicSetup, javascript(), strudelHighlight, darkTheme,
         evalKeymap, updateListener, EditorView.lineWrapping,
+        activeHighlightExtension(),
       ],
     });
 
     const view = new EditorView({ state, parent: editorRef.current });
     viewRef.current = view;
+    startHighlightLoop(view);
 
-    return () => { view.destroy(); viewRef.current = null; };
+    return () => { stopHighlightLoop(); clearHighlights(); view.destroy(); viewRef.current = null; };
   }, [handleEvaluate, stop]);
 
   // Sync store → editor
@@ -141,6 +144,11 @@ export const StrudelRepl: React.FC = () => {
 
     return () => { observer.disconnect(); resizeObserver.disconnect(); };
   }, []);
+
+  // Clear highlights when playback stops
+  useEffect(() => {
+    if (!isPlaying) clearHighlights();
+  }, [isPlaying]);
 
   // Run punchcard/onPaint painters in a draw loop
   useEffect(() => {

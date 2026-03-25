@@ -2,29 +2,23 @@
 
 These are things that DO NOT work or are frequent sources of errors. Memorize these — they will save you from breaking the music.
 
-## 1. ONLY use local samples — NO dirt-samples, NO `.bank()`, NO `gm_*`
+## 1. GM soundfont names (`gm_*`) are BROKEN — do NOT use
 
-**NEVER use dirt-samples** (`bd`, `sd`, `hh`, `cp`, `808bd`, etc.), GM soundfonts (`gm_*`), bank samples (`RolandTR808_bd`), or `.bank()`. ONLY use the local sample library.
+`gm_epiano1`, `gm_piano`, `gm_strings`, etc. are NOT available due to a dual-registry issue. They will produce silence.
 
 ```js
-// WRONG — dirt-samples, will cause fallback/unexpected sounds
-s("bd sd hh cp")
-s("808bd 808sd")
+// WRONG — will produce silence
+note("c4").s("gm_epiano1")
+note("c3").s("gm_acoustic_bass")
 
-// WRONG — GM soundfonts, will produce silence
-note("c4").sound("gm_epiano1")
-
-// WRONG — .bank() does not exist
-s("bd sd").bank("RolandTR808")
-
-// CORRECT — local samples ONLY
+// CORRECT — use piano samples or local samples instead
+note("c4 e4 g4").s("piano")
+note("c3 e3 g3").s("Stabs")
 s("Kicks Snares ClosedHats Claps")
-s("eot eot:3 eot:7 eot:1")
+s("bd sd hh cp").bank("RolandTR808")
 ```
 
-**Local sample names (case-sensitive):** `Kicks`, `Snares`, `ClosedHats`, `OpenHats`, `Claps`, `Crashes`, `eot`, `Bass`, `Chords`, `Stabs`, `Synth`, `Vox`
-
-**For melodic/harmonic parts:** use local samples: `Synth` (leads), `Stabs` (chords/voicings), `Bass` (basslines), `Chords` (chord stabs) with `.note()` or `chord()`
+**Everything else works:** dirt-samples (`bd`, `sd`, `hh`, etc.), `.bank()` with drum machines, `piano`, local samples (`Kicks`, `Snares`, etc.), VCSL, EmuSP12, Mridangam — all available.
 
 ## 2. `setcps()` is NOT chainable
 
@@ -55,16 +49,13 @@ stack(
 )
 ```
 
-## 4. `setcpm()` does not exist
+## 4. Two ways to set tempo: `setcps()` and `setcpm()`
 
-There is no `setcpm()` function. Convert BPM to CPS:
+Both work. `setcpm(bpm/4)` is often more intuitive (cycles per minute, where 1 cycle = 4 beats):
 
 ```js
-// WRONG
-setcpm(120)
-
-// CORRECT — BPM to CPS conversion
-setcps(120/240)  // or equivalently setcps(120/60/4)
+setcpm(120/4)    // 120 BPM — cleaner syntax
+setcps(120/240)  // same thing using cycles per second
 ```
 
 The formula: `cps = bpm / 60 / 4` or simply `cps = bpm / 240`
@@ -126,19 +117,9 @@ chord("<Cm7 Fm7>").s("Stabs").voicing()
 note("c2 e2 g2").s("Bass").lpf(400).release(0.1)
 ```
 
-## 8. Dirt-sample names (`bd`, `sd`, `hh`) — DO NOT USE
+## 8. Dirt-samples ARE available — but prefer local samples for drums
 
-**Do NOT use dirt-sample names.** Use local samples instead.
-
-```js
-// WRONG — dirt-samples
-s("bd sd hh cp")
-s("808bd 808sd")
-
-// CORRECT — local samples
-s("Kicks Snares ClosedHats Claps")
-s("eot eot:3")
-```
+Dirt-samples (`bd`, `sd`, `hh`, etc.) are loaded and work. But **prefer local samples** (`Kicks`, `Snares`, `ClosedHats`) for drums — they are the user's curated, higher-quality collection. Use dirt-samples when you need specific sounds not in the local library (e.g., `arpy`, `tabla`, `space`, `industrial`).
 
 ## 9. `.voicing()` requires `chord()`, NOT `note()`
 
