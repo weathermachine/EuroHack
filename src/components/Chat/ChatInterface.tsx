@@ -77,11 +77,11 @@ export default function ChatInterface() {
         case 'update_pattern': {
           const code = tool.input.code as string;
           if (code) {
+            // Show the AI-generated code in the REPL so the user can see and edit it
             setCode(code);
             import('@/audio/engine').then(async (engine) => {
               const result = await engine.evaluateCode(code);
               if (!result.success) {
-                // Show error in chat so user knows what happened
                 appendToLastMessage(`\n⚠️ Code error: ${result.error}`);
               }
             }).catch(() => {});
@@ -91,7 +91,12 @@ export default function ChatInterface() {
         case 'update_visualization': {
           const code = tool.input.code as string;
           if (code) {
-            useVizStore.getState().setCustomDraw(code);
+            const vizState = useVizStore.getState();
+            // Switch to events mode so the custom Canvas 2D draw is visible
+            if (vizState.vizMode !== 'events') {
+              vizState.setVizMode('events');
+            }
+            vizState.setCustomDraw(code);
           }
           break;
         }

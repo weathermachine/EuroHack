@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Rack — Documentation</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-raised: #1a1a2e;
+    --text: #e0e0e0;
+    --dim: #555577;
+    --green: #00ff41;
+    --cyan: #00d4ff;
+    --magenta: #ff00ff;
+    --amber: #ffcc00;
+    --border: #222244;
+    --code-bg: #0d0d16;
+  }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+  }
+
+  nav .nav-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  nav .nav-inner::-webkit-scrollbar { display: none; }
+
+  nav .nav-brand {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--green);
+    text-decoration: none;
+    padding: 0.75rem 0.75rem 0.75rem 0;
+    white-space: nowrap;
+    border-right: 1px solid var(--border);
+    margin-right: 0.5rem;
+  }
+
+  nav a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 0.7rem;
+    padding: 0.75rem 0.5rem;
+    white-space: nowrap;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--text); }
+  nav a.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  /* ── Main ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 6rem;
+  }
+
+  section {
+    padding-top: 4rem;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 6rem 0 4rem;
+  }
+  .hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--green);
+    text-shadow: 0 0 40px rgba(0, 255, 65, 0.3), 0 0 80px rgba(0, 255, 65, 0.1);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .hero .tagline {
+    font-size: 1.15rem;
+    color: var(--cyan);
+    margin-bottom: 1rem;
+  }
+  .hero .oneliner {
+    font-size: 0.85rem;
+    color: var(--dim);
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .hero .oneliner span { color: var(--text); }
+
+  /* ── Typography ── */
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cyan);
+    margin: 2rem 0 0.75rem;
+  }
+  p { margin-bottom: 1rem; font-size: 0.875rem; }
+  strong { color: var(--text); font-weight: 600; }
+
+  ul, ol {
+    margin: 0 0 1rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  li { margin-bottom: 0.4rem; }
+  li code { font-size: 0.8rem; }
+
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Panels ── */
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+  .panel-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .panel h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .panel p {
+    font-size: 0.78rem;
+    color: var(--dim);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .panel:nth-child(1) h4 { color: var(--green); }
+  .panel:nth-child(2) h4 { color: var(--magenta); }
+  .panel:nth-child(3) h4 { color: var(--cyan); }
+
+  /* ── Code blocks ── */
+  code {
+    font-family: inherit;
+    background: var(--code-bg);
+    color: var(--amber);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.82em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+  .kw { color: var(--magenta); }
+  .fn { color: var(--cyan); }
+  .str { color: var(--green); }
+  .cmt { color: var(--dim); }
+  .num { color: var(--amber); }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    background: var(--surface);
+    color: var(--cyan);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  td:first-child { color: var(--amber); font-weight: 500; }
+  tr:hover td { background: rgba(0, 212, 255, 0.03); }
+
+  /* ── Info cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .card h4 {
+    font-size: 0.9rem;
+    color: var(--green);
+    margin-bottom: 0.5rem;
+  }
+  .card p, .card ul {
+    font-size: 0.82rem;
+    color: var(--dim);
+  }
+  .card strong { color: var(--text); }
+
+  /* ── Diagram ── */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--dim);
+    margin: 1rem 0 1.5rem;
+    white-space: pre;
+    font-family: inherit;
+  }
+  .diagram .label { color: var(--cyan); }
+  .diagram .comp { color: var(--green); }
+  .diagram .arrow { color: var(--magenta); }
+
+  /* ── Future list ── */
+  .future-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+  .future-item {
+    font-size: 0.82rem;
+    color: var(--dim);
+    padding: 0.5rem 0.75rem;
+    background: var(--surface);
+    border-radius: 6px;
+    border-left: 2px solid var(--border);
+  }
+  .future-item:hover { border-left-color: var(--cyan); color: var(--text); }
+
+  /* ── Footer ── */
+  footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+  footer span { color: var(--text); }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 2.2rem; }
+    .hero .tagline { font-size: 0.95rem; }
+    .panels { grid-template-columns: 1fr; }
+    .future-grid { grid-template-columns: 1fr; }
+    nav a { font-size: 0.65rem; padding: 0.6rem 0.35rem; }
+    section { padding-top: 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#hero" class="nav-brand">AI Rack</a>
+    <a href="#what-it-does">What It Does</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#how-to-use">How to Use</a>
+    <a href="#samples">Samples</a>
+    <a href="#ai-engine">AI Engine</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#tech-stack">Tech Stack</a>
+    <a href="#future">Future</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── Hero ── -->
+<section class="hero" id="hero">
+  <h1>AI Rack</h1>
+  <p class="tagline">AI-powered live coding music environment</p>
+  <p class="oneliner"><span>Strudel</span> patterns + <span>Hydra</span> visuals + <span>Claude AI</span> chat in one interface</p>
+</section>
+
+<!-- ── What It Does ── -->
+<section id="what-it-does">
+  <h2>What It Does</h2>
+
+  <div class="panels">
+    <div class="panel">
+      <span class="panel-icon">&gt;_</span>
+      <h4>Code REPL</h4>
+      <p>Live music coding with Strudel, the JavaScript port of TidalCycles. Write patterns, hit Cmd+Enter, hear them instantly.</p>
+    </div>
+    <div class="panel">
+      <span class="panel-icon">&#9670;</span>
+      <h4>Visualization</h4>
+      <p>GPU shader visuals with Hydra, driven by audio analysis. Canvas 2D event lanes. Beat-reactive UI with CRT aesthetic.</p>
+    </div>
+    <div class="panel">
+      <span class="panel-icon">&#9883;</span>
+      <h4>AI Chat</h4>
+      <p>An AI collaborator that generates, transforms, and evolves musical patterns. Ask it to change mood, genre, or energy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Getting Started ── -->
+<section id="getting-started">
+  <h2>Getting Started</h2>
+
+  <h3>Prerequisites</h3>
+  <ul>
+    <li><strong>Node.js 20+</strong> &mdash; required for both frontend and backend</li>
+    <li><strong>ANTHROPIC_API_KEY</strong> &mdash; set as an environment variable for AI chat features</li>
+  </ul>
+
+  <h3>Installation</h3>
+  <pre><code><span class="cmt"># Clone and install dependencies</span>
+<span class="fn">npm</span> install</code></pre>
+
+  <h3>Running</h3>
+  <pre><code><span class="cmt"># Development mode &mdash; Vite on :5173, Express on :3001</span>
+<span class="fn">npm</span> run dev
+
+<span class="cmt"># Or run with Electron desktop shell</span>
+<span class="fn">npm</span> run dev:electron</code></pre>
+</section>
+
+<!-- ── How to Use ── -->
+<section id="how-to-use">
+  <h2>How to Use</h2>
+
+  <div class="card">
+    <h4>REPL Panel</h4>
+    <p>Write Strudel code in the editor. Press <code>Cmd+Enter</code> (or <code>Ctrl+Enter</code>) to evaluate. Music hot-swaps in under 50ms &mdash; no restarts, no gaps.</p>
+  </div>
+
+  <div class="card">
+    <h4>Chat Panel</h4>
+    <p>Ask the AI to generate patterns, change mood, adjust energy, or switch genres. It knows about local samples and the built-in music engine, and injects patterns directly into the REPL.</p>
+  </div>
+
+  <div class="card">
+    <h4>Viz Panel</h4>
+    <p>Toggle between two visualization modes:</p>
+    <ul>
+      <li><strong>Events</strong> &mdash; Canvas 2D lane visualization driven by Strudel's <code>.onTrigger</code> events</li>
+      <li><strong>Hydra</strong> &mdash; GPU shader presets selectable from a dropdown. Audio-reactive via <code>window.audio</code> globals.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Voice Input</h4>
+    <p>Use the microphone button for speech-to-text commands. Speak naturally to direct the AI &mdash; "make it darker", "add some hi-hats", "switch to trip hop".</p>
+  </div>
+</section>
+
+<!-- ── Sample Library ── -->
+<section id="samples">
+  <h2>Sample Library</h2>
+  <p>AI Rack ships with a local sample library. Reference samples by name in your Strudel patterns.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Count</th><th>Use for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Kicks</td><td>63</td><td>Kick drums</td></tr>
+        <tr><td>Snares</td><td>62</td><td>Snare drums</td></tr>
+        <tr><td>ClosedHats</td><td>40</td><td>Closed hi-hats</td></tr>
+        <tr><td>OpenHats</td><td>32</td><td>Open hi-hats</td></tr>
+        <tr><td>Claps</td><td>34</td><td>Claps</td></tr>
+        <tr><td>Crashes</td><td>30</td><td>Crash cymbals</td></tr>
+        <tr><td>eot</td><td>15</td><td>808 drum machine</td></tr>
+        <tr><td>Bass</td><td>46</td><td>Bass one-shots &amp; basslines</td></tr>
+        <tr><td>Chords</td><td>270</td><td>Chord stabs</td></tr>
+        <tr><td>Stabs</td><td>79</td><td>Synth stabs &amp; chord voicings</td></tr>
+        <tr><td>Synth</td><td>62</td><td>Leads &amp; melodies</td></tr>
+        <tr><td>Vox</td><td>126</td><td>Vocal samples</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Use <code>note()</code> with samples to pitch-shift them. Use <code>chord()</code> with <code>.voicing()</code> for chord progressions.</p>
+</section>
+
+<!-- ── AI Music Engine ── -->
+<section id="ai-engine">
+  <h2>AI Music Engine</h2>
+  <p>The built-in music engine gives the AI deep knowledge of music theory and pattern generation.</p>
+
+  <div class="card">
+    <h4>Pattern Generation</h4>
+    <p><strong>9 genre templates</strong> &mdash; techno, house, dnb, trap, breakbeat, ambient, boom_bap, trip_hop, experimental. Each genre defines drum patterns, bass behavior, melodic tendencies, and structural conventions.</p>
+  </div>
+
+  <div class="card">
+    <h4>Music Theory</h4>
+    <p><strong>17 scales</strong>, <strong>9 chord progression styles</strong>, euclidean rhythms, and arpeggios. The engine understands key signatures, voice leading, and idiomatic patterns for each genre.</p>
+  </div>
+
+  <div class="card">
+    <h4>Transforms</h4>
+    <p><strong>7 moods</strong> &mdash; dark, euphoric, melancholic, aggressive, dreamy, peaceful, energetic. Energy levels from 0&ndash;10. Refinements that evolve a pattern while preserving its identity.</p>
+  </div>
+
+  <div class="card">
+    <h4>REST API</h4>
+    <p>All engine capabilities are available at <code>/api/engine/*</code> endpoints. Generate patterns, apply transforms, and query music theory programmatically.</p>
+  </div>
+</section>
+
+<!-- ── Architecture ── -->
+<section id="architecture">
+  <h2>Architecture</h2>
+
+<div class="diagram"><span class="label">Frontend (React + Vite)</span>          <span class="label">Backend (Express)</span>
+┌─────────────────────┐         ┌──────────────────────┐
+│ <span class="comp">StrudelRepl</span>          │         │ <span class="comp">Claude API Proxy</span>      │
+│ <span class="comp">HydraCanvas</span> (2 modes)│  <span class="arrow">SSE</span>   │ <span class="comp">Music Engine</span>          │
+│ <span class="comp">ChatInterface</span>        │<span class="arrow">◄──────►</span>│  ├ <span class="comp">MusicTheory</span>        │
+│ <span class="comp">StatusBar</span>            │        │  ├ <span class="comp">PatternGenerator</span>   │
+│                      │        │  └ <span class="comp">Transforms</span>         │
+│ <span class="comp">Zustand Stores</span>       │        │ <span class="comp">Knowledge Base</span> (10 md)│
+│  ├ <span class="comp">patternStore</span>      │        │ <span class="comp">Engine REST API</span>       │
+│  ├ <span class="comp">chatStore</span>         │        └──────────────────────┘
+│  ├ <span class="comp">audioStore</span>        │
+│  ├ <span class="comp">vizStore</span>          │        <span class="label">Audio Pipeline</span>
+│  └ <span class="comp">uiStore</span>           │        ┌──────────────────────┐
+│                      │        │ <span class="comp">Strudel Scheduler</span>     │
+│ <span class="comp">Audio Analysis</span>       │        │ <span class="arrow">→</span> <span class="comp">Web Audio API</span>       │
+│  ├ <span class="comp">Meyda</span> (features)  │        │ <span class="arrow">→</span> <span class="comp">AnalyserNode</span>        │
+│  └ CSS custom props   │        │ <span class="arrow">→</span> <span class="comp">Meyda extraction</span>    │
+└─────────────────────┘         └──────────────────────┘</div>
+
+  <h3>Key Data Flows</h3>
+  <ul>
+    <li><strong>Chat &rarr; AI &rarr; generate_pattern tool &rarr; pattern hot-swap</strong> (&lt;50ms)</li>
+    <li><strong>Audio &rarr; Meyda &rarr; audioStore &rarr; CSS vars</strong> &rarr; beat-reactive UI</li>
+    <li><strong>Audio &rarr; window.audio globals &rarr; Hydra</strong> shader reactivity</li>
+    <li><strong>VizEvents from Strudel <code>.onTrigger</code></strong> &rarr; Canvas 2D lane visualization</li>
+  </ul>
+</section>
+
+<!-- ── Tech Stack ── -->
+<section id="tech-stack">
+  <h2>Tech Stack</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Technology</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Framework</td><td>React 18 + TypeScript</td></tr>
+        <tr><td>Bundler</td><td>Vite 6</td></tr>
+        <tr><td>Audio Engine</td><td>@strudel/web</td></tr>
+        <tr><td>Visuals</td><td>hydra-synth + Canvas 2D</td></tr>
+        <tr><td>Audio Analysis</td><td>Meyda</td></tr>
+        <tr><td>State</td><td>Zustand</td></tr>
+        <tr><td>Code Editor</td><td>CodeMirror 6</td></tr>
+        <tr><td>AI Backend</td><td>Express + Anthropic SDK</td></tr>
+        <tr><td>Music Engine</td><td>Custom (MusicTheory, PatternGenerator, Transforms)</td></tr>
+        <tr><td>Desktop</td><td>Electron 33 (optional)</td></tr>
+        <tr><td>Testing</td><td>Vitest + Playwright</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Future Directions ── -->
+<section id="future">
+  <h2>Future Directions</h2>
+
+  <div class="future-grid">
+    <div class="future-item">MIDI controller input/output</div>
+    <div class="future-item">Session save/load with pattern history</div>
+    <div class="future-item">Collaborative multi-user sessions</div>
+    <div class="future-item">More Hydra shader presets</div>
+    <div class="future-item">Sample browser/audition UI</div>
+    <div class="future-item">Waveform editing and slicing</div>
+    <div class="future-item">Pattern recording and looping</div>
+    <div class="future-item">Export to audio file (WAV/MP3)</div>
+    <div class="future-item">More genre templates and progressions</div>
+    <div class="future-item">Three.js 3D visualization mode</div>
+  </div>
+</section>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>License: <span>AGPL-3.0</span></p>
+  <p>Built with <span>Strudel</span> &middot; <span>Hydra</span> &middot; <span>Claude</span> &middot; <span>React</span></p>
+</footer>
+
+<!-- ── Active nav highlight on scroll ── -->
+<script>
+(function() {
+  const links = document.querySelectorAll('nav a:not(.nav-brand)');
+  const sections = [];
+  links.forEach(function(link) {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id: id, el: el, link: link });
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 80;
+    let current = sections[0];
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].el.offsetTop <= scrollY) current = sections[i];
+    }
+    links.forEach(function(l) { l.classList.remove('active'); });
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

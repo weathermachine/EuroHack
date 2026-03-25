@@ -8,14 +8,23 @@ interface VizStore {
   /** Last error from compiling custom code */
   error: string | null;
 
+  /** Current visualization mode */
+  vizMode: 'events' | 'hydra';
+  /** Selected Hydra shader preset ID */
+  selectedShader: string;
+
   setCustomDraw: (code: string) => void;
   clearCustomDraw: () => void;
+  setVizMode: (mode: 'events' | 'hydra') => void;
+  setSelectedShader: (id: string) => void;
 }
 
 export const useVizStore = create<VizStore>((set) => ({
   customDrawCode: null,
   drawFn: null,
   error: null,
+  vizMode: 'events',
+  selectedShader: 'audio-reactive-1',
 
   setCustomDraw: (code: string) => {
     try {
@@ -46,4 +55,8 @@ export const useVizStore = create<VizStore>((set) => ({
   },
 
   clearCustomDraw: () => set({ customDrawCode: null, drawFn: null, error: null }),
+
+  setVizMode: (mode) => set({ vizMode: mode }),
+
+  setSelectedShader: (id) => set({ selectedShader: id }),
 }));

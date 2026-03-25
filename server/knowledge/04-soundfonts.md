@@ -1,4 +1,4 @@
-# Melodic Sounds: Built-in Synths (GM Soundfonts are BROKEN)
+# Melodic Sounds: Local Samples (GM Soundfonts are BROKEN)
 
 ## GM Soundfonts — DO NOT USE
 
@@ -11,23 +11,24 @@ The `@strudel/soundfonts` package registers sounds via `registerSound()` importe
 
 ---
 
-## Built-in Synths — ALWAYS AVAILABLE
+## Built-in Synths — DO NOT USE
 
-These are waveform-based synthesizers built into WebAudio. They are part of the REPL's internal engine and **always work**. Use them for ALL melodic and harmonic parts.
+**Do NOT use built-in synths** (`sine`, `sawtooth`, `square`, `triangle`, `fm`) as sound sources. Use local samples instead.
 
-| Name | Description | Best for |
-|------|-------------|----------|
-| `sine` | Pure sine wave | Sub-bass, gentle tones, pure pads |
-| `sawtooth` | Sawtooth wave (bright, buzzy) | Leads, bass, pads, strings-like |
-| `square` | Square wave (hollow, reedy) | Chiptune, reedy leads, organ-like |
-| `triangle` | Triangle wave (soft, mellow) | Soft leads, flute-like, keys |
-| `fm` | FM synthesis | Electric piano, bells, metallic bass |
+**Note:** `sine`, `saw`, `square`, `tri`, `cosine`, `rand`, `irand` are still valid as **modulation sources** (LFOs) for parameters like `.lpf()`, `.gain()`, `.pan()`, etc. Only their use as sound names in `.s()` or `.sound()` is prohibited.
 
-### FM Synth Parameters
-- `.fmi(n)` — FM modulation index (higher = brighter/more harmonics). Default ~1.
-- `.fmh(n)` — FM harmonicity ratio (frequency ratio of modulator to carrier). Try 1, 1.5, 2, 3.
-- `.fmattack(n)` — FM envelope attack
-- `.fmdecay(n)` — FM envelope decay
+---
+
+## Local Samples for Melodic/Harmonic Parts
+
+Use these local samples for ALL melodic and harmonic parts:
+
+| Name | Variants | Best for |
+|------|----------|----------|
+| `Synth` | 62 | Leads, melodies, soft textures, flute-like |
+| `Stabs` | 79 | Chords, voicings, electric piano feel, stabs |
+| `Bass` | 46 | Basslines, sub-bass, rubber bass |
+| `Chords` | 270 | Chord stabs, progressions, pads |
 
 ---
 
@@ -35,52 +36,41 @@ These are waveform-based synthesizers built into WebAudio. They are part of the 
 
 | Instead of... | Use this |
 |--------------|----------|
-| `gm_epiano1` / `gm_piano` | `note("...").sound("fm").fmi(1.5).fmh(2).release(0.3)` |
-| `gm_synth_bass_1` / `gm_synth_bass_2` | `note("...").sound("sawtooth").lpf(400).release(0.1)` |
-| `gm_electric_bass_finger` | `note("...").sound("triangle").lpf(600).release(0.15)` or dirt-sample `jvbass` with `.note()` |
-| `gm_pad_warm` / `gm_pad_*` | `note("...").sound("sawtooth").lpf(800).release(1).room(0.6)` |
-| `gm_string_ensemble_1` | `note("...").sound("sawtooth").lpf(2000).release(0.8).room(0.5)` |
-| `gm_trumpet` / `gm_brass_section` | `note("...").sound("sawtooth").lpf(3000).release(0.2)` |
-| `gm_flute` / `gm_recorder` | `note("...").sound("triangle").release(0.3).room(0.3)` |
-| `gm_vibraphone` / `gm_glockenspiel` | `note("...").sound("fm").fmi(3).fmh(3.5).release(0.5).room(0.4)` |
-| `gm_organ` / `gm_church_organ` | `note("...").sound("square").lpf(2000).release(0.5)` |
-| `gm_choir_aahs` | `note("...").sound("triangle").lpf(1500).release(1.5).room(0.7)` |
-
-### Dirt-sample alternatives for melodic/tonal parts
-Some dirt-samples are tonal and respond to `.note()`:
-- `arpy` — arpeggiated synth, great for melodies
-- `jvbass` — JV bass, great for bass lines
-- `casio` — Casio keyboard tones
-- `pluck` — plucked string sounds
-- `juno` — Juno synth patches (warm)
-- `moog` — Moog synth patches
-- `sax` — saxophone (use `.note()` cautiously — these are one-shot samples)
-- `pad` — pad sounds
+| `gm_epiano1` / `gm_piano` | `chord("...").s("Stabs").voicing().release(0.3)` |
+| `gm_synth_bass_1` / `gm_synth_bass_2` | `note("...").s("Bass").lpf(400).release(0.1)` |
+| `gm_electric_bass_finger` | `note("...").s("Bass").lpf(600).release(0.15)` |
+| `gm_pad_warm` / `gm_pad_*` | `note("...").s("Chords").lpf(800).release(1).room(0.6)` |
+| `gm_string_ensemble_1` | `note("...").s("Synth").lpf(2000).release(0.8).room(0.5)` |
+| `gm_trumpet` / `gm_brass_section` | `note("...").s("Stabs").lpf(3000).release(0.2)` |
+| `gm_flute` / `gm_recorder` | `note("...").s("Synth").release(0.3).room(0.3)` |
+| `gm_vibraphone` / `gm_glockenspiel` | `note("...").s("Synth").release(0.5).room(0.4)` |
+| `gm_organ` / `gm_church_organ` | `note("...").s("Stabs").lpf(2000).release(0.5)` |
+| `gm_choir_aahs` | `note("...").s("Vox").lpf(1500).release(1.5).room(0.7)` |
 
 ---
 
 ## Working Examples
 
 ```js
-// Electric piano chord progression (replaces gm_epiano1)
-chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing()
+// Chord progression (replaces gm_epiano1)
+chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing()
   .release(0.4).room(0.3).gain(0.5)
 
 // Warm pad (replaces gm_pad_warm)
-chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
+chord("<Cm7 Ab^7 Fm9 G7sus4>").s("Chords").voicing()
   .lpf(sine.range(600, 2000).slow(16)).release(1.5).room(0.7).gain(0.3)
 
 // Bass line (replaces gm_synth_bass_2)
-note("c2 ~ e2 g2").sound("sawtooth").lpf(400).release(0.1).gain(0.8)
+note("c2 ~ e2 g2").s("Bass").lpf(400).release(0.1).gain(0.8)
 
-// Vibraphone-like (replaces gm_vibraphone)
-note("<C4 E4 G4 C5>/2").sound("fm").fmi(3).fmh(3.5)
+// Lead melody (replaces gm_vibraphone)
+note("<C4 E4 G4 C5>/2").s("Synth")
   .release(0.6).room(0.4).gain(0.3)
 
 // Flute-like lead (replaces gm_flute)
-note("c5 e5 g5 c6").sound("triangle").release(0.3).room(0.3).gain(0.4)
+note("c5 e5 g5 c6").s("Synth").release(0.3).room(0.3).gain(0.4)
 
 // String ensemble feel (replaces gm_string_ensemble_1)
-note("<C3 E3 G3 C4>").sound("sawtooth").lpf(2000).release(0.8)
+note("<C3 E3 G3 C4>").s("Synth").lpf(2000).release(0.8)
   .room(0.5).size(0.7).gain(0.35)
 ```

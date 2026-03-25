@@ -2,7 +2,7 @@
 
 Each genre includes BPM, tempo setup, drum patterns, bass, chords, effects, groove techniques, and a complete working template.
 
-**All templates use ONLY confirmed-working sounds: dirt-samples + built-in synths (sine, sawtooth, square, triangle, fm).**
+**All templates use ONLY confirmed-working sounds: local samples (Kicks, Snares, ClosedHats, OpenHats, Claps, Crashes, eot, Bass, Chords, Stabs, Synth, Vox).**
 
 ---
 
@@ -19,21 +19,21 @@ Each genre includes BPM, tempo setup, drum patterns, bass, chords, effects, groo
 
 ### Drum Pattern
 ```js
-s("808bd:5 ~ ~ 808bd:5 ~ ~ 808bd:5 ~")  // kicks
-s("[~ ~ ~ ~] 808sd [~ ~ ~ ~] 808sd")      // snare on 2 & 4
-s("808hc*8").gain("[.4 .7 .5 .8]*2")       // hats with velocity
+s("eot:5 ~ ~ eot:5 ~ ~ eot:5 ~")  // kicks
+s("[~ ~ ~ ~] eot:8 [~ ~ ~ ~] eot:8")      // snare on 2 & 4
+s("ClosedHats*8").gain("[.4 .7 .5 .8]*2")       // hats with velocity
 ```
 
 ### Bass Approach
-Use `sawtooth` with low-pass filter for rubber 808-style bass:
+Use `Bass` with low-pass filter for rubber 808-style bass:
 ```js
-note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85)
+note("c2 ~ ~ c2 ~ eb2 ~ ~").s("Bass").lpf(400).release(0.1).gain(0.85)
 ```
 
 ### Chords/Keys
-FM synth for Rhodes-like electric piano feel:
+Stabs for Rhodes-like electric piano feel:
 ```js
-chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.5)
+chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing().lpf(1200).gain(0.5)
 ```
 
 ### Effects Profile
@@ -44,19 +44,19 @@ chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(
 ### Groove
 Swing the hats with `.late()`:
 ```js
-s("808hc*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2")
+s("ClosedHats*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2")
 ```
 
 ### Complete Template
 ```js
 setcps(90/240)
 stack(
-  s("808bd:5 ~ ~ 808bd:5 ~ ~ 808bd:5 ~").gain(0.9),
-  s("[~ ~ ~ ~] 808sd:3 [~ ~ ~ ~] 808sd:3").gain(0.8),
-  s("808hc*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2"),
-  s("808oh ~ ~ ~ 808oh ~ ~ ~").gain(0.3),
-  note("c2 ~ ~ c2 ~ eb2 ~ ~").sound("sawtooth").lpf(400).release(0.1).gain(0.85),
-  chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().lpf(1200).gain(0.45).room(0.2)
+  s("eot:5 ~ ~ eot:5 ~ ~ eot:5 ~").gain(0.9),
+  s("[~ ~ ~ ~] eot:8 [~ ~ ~ ~] eot:8").gain(0.8),
+  s("ClosedHats*8").late("0 .04 0 .04").gain("[.4 .7 .5 .8]*2"),
+  s("OpenHats ~ ~ ~ OpenHats ~ ~ ~").gain(0.3),
+  note("c2 ~ ~ c2 ~ eb2 ~ ~").s("Bass").lpf(400).release(0.1).gain(0.85),
+  chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing().lpf(1200).gain(0.45).room(0.2)
 )
 ```
 
@@ -75,23 +75,23 @@ stack(
 
 ### Drum Pattern
 ```js
-s("bd*4")                                    // four-on-the-floor
-s("~ cp ~ cp")                               // clap on 2 & 4
-s("hh*8").gain("[.5 .8]*4")                  // 8th note hats
-s("~ ~ ~ ~ ~ ~ oh ~")                        // open hat accents
+s("Kicks*4")                                    // four-on-the-floor
+s("~ Claps ~ Claps")                               // clap on 2 & 4
+s("ClosedHats*8").gain("[.5 .8]*4")                  // 8th note hats
+s("~ ~ ~ ~ ~ ~ OpenHats ~")                        // open hat accents
 ```
 
 ### Bass Approach
-Acid-style with filter sweeps — use `sawtooth`:
+Acid-style with filter sweeps — use `Bass`:
 ```js
-note("c2 c2 c3 c2 eb2 c2 c3 c2").sound("sawtooth")
+note("c2 c2 c3 c2 eb2 c2 c3 c2").s("Bass")
   .lpf(sine.range(200, 3000).slow(8)).lpq(8).gain(0.7)
 ```
 
 ### Chords/Keys
 Minimal — stabs or pads, not full progressions.
 ```js
-note("<C5 Eb5>/4").sound("sawtooth").lpf(1500).release(1.5).gain(0.25).room(0.6).size(0.9)
+note("<C5 Eb5>/4").s("Synth").lpf(1500).release(1.5).gain(0.25).room(0.6).size(0.9)
 ```
 
 ### Effects Profile
@@ -103,20 +103,20 @@ note("<C5 Eb5>/4").sound("sawtooth").lpf(1500).release(1.5).gain(0.25).room(0.6)
 ### Groove
 Techno is mostly straight. Use `.sometimes()` for variation:
 ```js
-s("hh*8").sometimes(x => x.speed(1.5)).gain("[.5 .8]*4")
+s("ClosedHats*8").sometimes(x => x.speed(1.5)).gain("[.5 .8]*4")
 ```
 
 ### Complete Template
 ```js
 setcps(138/240)
 stack(
-  s("bd*4").gain(0.9).distort(0.15),
-  s("~ cp ~ cp").room(0.3).size(0.5).gain(0.75),
-  s("hh*8").gain("[.5 .8]*4").lpf(4000),
-  s("~ ~ ~ ~ ~ ~ oh ~").gain(0.4).room(0.3),
-  note("c2 c2 c3 c2 eb2 c2 c3 c2").sound("sawtooth")
+  s("Kicks*4").gain(0.9).distort(0.15),
+  s("~ Claps ~ Claps").room(0.3).size(0.5).gain(0.75),
+  s("ClosedHats*8").gain("[.5 .8]*4").lpf(4000),
+  s("~ ~ ~ ~ ~ ~ OpenHats ~").gain(0.4).room(0.3),
+  note("c2 c2 c3 c2 eb2 c2 c3 c2").s("Bass")
     .lpf(sine.range(200, 3000).slow(8)).lpq(8).gain(0.65),
-  s("cr/4").gain(0.3).room(0.5).size(0.8)
+  s("Crashes/4").gain(0.3).room(0.5).size(0.8)
 )
 ```
 
@@ -135,22 +135,22 @@ stack(
 
 ### Drum Pattern
 ```js
-s("bd*4")                                    // four-on-the-floor
-s("~ hh ~ hh")                               // offbeat hats (signature!)
-s("~ cp ~ cp")                               // clap on 2 & 4
-s("oh ~ oh ~ oh ~ oh ~").gain(0.3)           // open hat pulse
+s("Kicks*4")                                    // four-on-the-floor
+s("~ ClosedHats ~ ClosedHats")                               // offbeat hats (signature!)
+s("~ Claps ~ Claps")                               // clap on 2 & 4
+s("OpenHats ~ OpenHats ~ OpenHats ~ OpenHats ~").gain(0.3)           // open hat pulse
 ```
 
 ### Bass Approach
-Deep and rolling — use `sawtooth` or `triangle`:
+Deep and rolling — use `Bass`:
 ```js
-note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8)
+note("c2 ~ c2 c2 ~ c2 eb2 ~").s("Bass").lpf(500).release(0.1).gain(0.8)
 ```
 
 ### Chords/Keys
-Piano stabs — use `fm` for electric piano feel:
+Piano stabs — use `Stabs` for electric piano feel:
 ```js
-chord("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+chord("<Cm7 Fm7 Bb7 Eb^7>").s("Stabs").voicing().gain(0.5)
   .room(0.2).delay(0.15)
 ```
 
@@ -162,19 +162,19 @@ chord("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
 ### Groove
 Off-beat hats ARE the groove. Add subtle swing:
 ```js
-s("~ hh ~ hh").late("0 .02 0 .02")
+s("~ ClosedHats ~ ClosedHats").late("0 .02 0 .02")
 ```
 
 ### Complete Template
 ```js
 setcps(124/240)
 stack(
-  s("bd*4").gain(0.9),
-  s("~ hh ~ hh").gain(0.7),
-  s("~ cp ~ cp").room(0.25).gain(0.75),
-  s("oh*4").gain("[0 .3 0 .3]"),
-  note("c2 ~ c2 c2 ~ c2 eb2 ~").sound("sawtooth").lpf(500).release(0.1).gain(0.8),
-  chord("<Cm7 Fm7 Bb7 Eb^7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
+  s("Kicks*4").gain(0.9),
+  s("~ ClosedHats ~ ClosedHats").gain(0.7),
+  s("~ Claps ~ Claps").room(0.25).gain(0.75),
+  s("OpenHats*4").gain("[0 .3 0 .3]"),
+  note("c2 ~ c2 c2 ~ c2 eb2 ~").s("Bass").lpf(500).release(0.1).gain(0.8),
+  chord("<Cm7 Fm7 Bb7 Eb^7>").s("Stabs").voicing().gain(0.45)
     .room(0.25).delay(0.15).delaytime(0.19)
 )
 ```
@@ -194,22 +194,22 @@ stack(
 
 ### Drum Pattern
 ```js
-s("bd ~ ~ bd ~ ~ bd ~")                     // syncopated kick
-s("~ ~ sn ~ ~ sn ~ ~")                       // off-grid snare
-s("hh*16").gain("[.3 .6 .4 .7]*4")           // rapid hats
+s("Kicks ~ ~ Kicks ~ ~ Kicks ~")                     // syncopated kick
+s("~ ~ Snares ~ ~ Snares ~ ~")                       // off-grid snare
+s("ClosedHats*16").gain("[.3 .6 .4 .7]*4")           // rapid hats
 ```
 
 ### Bass Approach
-Reese bass — detuned sawtooth:
+Reese bass — heavy filtered bass:
 ```js
-note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
+note("c2 ~ c2 ~ eb2 ~ c2 ~").s("Bass")
   .lpf(sine.range(150, 800).slow(4)).gain(0.8).distort(0.1)
 ```
 
 ### Chords/Keys
-Dark atmospheric pads using sawtooth with heavy filtering:
+Dark atmospheric pads with heavy filtering:
 ```js
-chord("<Cm Gm Ab Bb>").s("sawtooth").voicing().gain(0.3)
+chord("<Cm Gm Ab Bb>").s("Chords").voicing().gain(0.3)
   .lpf(1200).room(0.5).size(0.8).release(1)
 ```
 
@@ -229,12 +229,12 @@ s("amencutup:0 amencutup:3 amencutup:1 amencutup:7 amencutup:2 amencutup:5 amenc
 ```js
 setcps(174/240)
 stack(
-  s("bd ~ [~ bd] ~ ~ [bd ~] ~ ~").gain(0.9),
-  s("~ ~ sn:3 ~ ~ [~ sn:3] ~ ~").room(0.2).gain(0.8),
-  s("hh*16").gain("[.3 .6 .4 .7]*4").lpf(6000),
-  note("c2 ~ c2 ~ eb2 ~ c2 ~").sound("sawtooth")
+  s("Kicks ~ [~ Kicks] ~ ~ [Kicks ~] ~ ~").gain(0.9),
+  s("~ ~ Snares:3 ~ ~ [~ Snares:3] ~ ~").room(0.2).gain(0.8),
+  s("ClosedHats*16").gain("[.3 .6 .4 .7]*4").lpf(6000),
+  note("c2 ~ c2 ~ eb2 ~ c2 ~").s("Bass")
     .lpf(sine.range(150, 800).slow(4)).gain(0.75).distort(0.1),
-  chord("<Cm Gm Ab Bb>").s("sawtooth").voicing().gain(0.25)
+  chord("<Cm Gm Ab Bb>").s("Chords").voicing().gain(0.25)
     .lpf(1200).room(0.5).size(0.8).release(1)
 )
 ```
@@ -254,22 +254,22 @@ stack(
 
 ### Drum Pattern
 ```js
-s("bd ~ bd ~")                                // simple kick
-s("~ sd ~ sd")                                // snare on 2 & 4
-s("[hh hh hh hh] [hh hh hh hh]").gain("[.4 .6 .5 .7]*2")  // gentle hats
+s("Kicks ~ Kicks ~")                                // simple kick
+s("~ Snares ~ Snares")                                // snare on 2 & 4
+s("[ClosedHats ClosedHats ClosedHats ClosedHats] [ClosedHats ClosedHats ClosedHats ClosedHats]").gain("[.4 .6 .5 .7]*2")  // gentle hats
 ```
 
 ### Bass Approach
-Walking bass — use `triangle` for warm finger-bass feel:
+Walking bass — use `Bass` for warm finger-bass feel:
 ```js
-note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
+note("c2 e2 g2 e2 f2 a2 c3 a2").s("Bass")
   .gain(0.75).lpf(600).release(0.15)
 ```
 
 ### Chords/Keys
-Rich Rhodes voicings using FM synth:
+Rich Rhodes voicings using Stabs:
 ```js
-chord("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+chord("<Cm9 Fm9 Dm7b5 G7>").s("Stabs").voicing().gain(0.5)
   .room(0.3).size(0.4).lpf(2500)
 ```
 
@@ -281,21 +281,21 @@ chord("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
 ### Groove
 Deep pocket with swing:
 ```js
-s("[hh hh hh hh]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2")
+s("[ClosedHats ClosedHats ClosedHats ClosedHats]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2")
 ```
 
 ### Complete Template
 ```js
 setcps(95/240)
 stack(
-  s("bd ~ [~ bd] ~").gain(0.85),
-  s("~ sd ~ sd").gain(0.7).room(0.2),
-  s("[hh hh hh hh]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2"),
-  note("c2 e2 g2 e2 f2 a2 c3 a2").sound("triangle")
+  s("Kicks ~ [~ Kicks] ~").gain(0.85),
+  s("~ Snares ~ Snares").gain(0.7).room(0.2),
+  s("[ClosedHats ClosedHats ClosedHats ClosedHats]*2").late("0 .05 0 .03").gain("[.4 .6 .5 .7]*2"),
+  note("c2 e2 g2 e2 f2 a2 c3 a2").s("Bass")
     .gain(0.7).lpf(600).release(0.15),
-  chord("<Cm9 Fm9 Dm7b5 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.45)
+  chord("<Cm9 Fm9 Dm7b5 G7>").s("Stabs").voicing().gain(0.45)
     .room(0.3).size(0.4).lpf(2500),
-  note("<C4 E4 G4 C5>/2").sound("fm").fmi(3).fmh(3.5).gain(0.2).room(0.4).release(0.5)
+  note("<C4 E4 G4 C5>/2").s("Synth").gain(0.2).room(0.4).release(0.5)
 )
 ```
 
@@ -314,20 +314,20 @@ stack(
 
 ### Drum Pattern (minimal)
 ```js
-s("bd ~ ~ ~ bd ~ ~ ~").gain(0.5)            // sparse kick
-s("~ ~ ~ ~ ~ ~ hh ~").gain(0.3).room(0.6)   // occasional hat
+s("Kicks ~ ~ ~ Kicks ~ ~ ~").gain(0.5)            // sparse kick
+s("~ ~ ~ ~ ~ ~ ClosedHats ~").gain(0.3).room(0.6)   // occasional hat
 ```
 
 ### Bass Approach
-Sub-bass or sine bass, very sparse:
+Sub-bass, very sparse:
 ```js
-note("c2 ~ ~ ~ ~ ~ eb2 ~").sound("sine").gain(0.6).release(0.8).lpf(200)
+note("c2 ~ ~ ~ ~ ~ eb2 ~").s("Bass").gain(0.6).release(0.8).lpf(200)
 ```
 
 ### Chords/Keys
-Lush evolving pads — sawtooth with heavy filtering and reverb:
+Lush evolving pads with heavy filtering and reverb:
 ```js
-chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
+chord("<Cm7 Ab^7 Fm9 G7sus4>").s("Chords").voicing()
   .room(0.8).size(0.95).release(2).gain(0.4)
   .lpf(sine.range(800, 3000).slow(16))
 ```
@@ -342,13 +342,13 @@ chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
 ```js
 setcps(70/240)
 stack(
-  s("bd ~ ~ ~ bd ~ ~ ~").gain(0.45).room(0.4).lpf(200),
-  chord("<Cm7 Ab^7 Fm9 G7sus4>").s("sawtooth").voicing()
+  s("Kicks ~ ~ ~ Kicks ~ ~ ~").gain(0.45).room(0.4).lpf(200),
+  chord("<Cm7 Ab^7 Fm9 G7sus4>").s("Chords").voicing()
     .room(0.8).size(0.95).release(2).gain(0.35)
     .lpf(sine.range(800, 3000).slow(16)),
-  note("<C4 Ab3 F4 G4>/2").sound("fm").fmi(3).fmh(3.5).gain(0.15)
+  note("<C4 Ab3 F4 G4>/2").s("Synth").gain(0.15)
     .room(0.7).delay(0.5).delaytime(0.375).delayfeedback(0.5).release(0.6),
-  note("c2 ~ ~ ~ ~ ~ eb2 ~").sound("sine").gain(0.5).release(0.8).lpf(200),
+  note("c2 ~ ~ ~ ~ ~ eb2 ~").s("Bass").gain(0.5).release(0.8).lpf(200),
   s("wind:3").gain(0.1).room(0.5).speed(0.5).begin(0.1).end(0.9)
 )
 ```
@@ -368,22 +368,22 @@ stack(
 
 ### Drum Pattern
 ```js
-s("bd ~ [~ bd] ~").lpf(2000).gain(0.7)        // muted kick
-s("~ sd ~ sd").lpf(3000).gain(0.5)             // soft snare
-s("hh*8").lpf(2500).gain("[.3 .5 .3 .6]*2")   // filtered hats
+s("Kicks ~ [~ Kicks] ~").lpf(2000).gain(0.7)        // muted kick
+s("~ Snares ~ Snares").lpf(3000).gain(0.5)             // soft snare
+s("ClosedHats*8").lpf(2500).gain("[.3 .5 .3 .6]*2")   // filtered hats
 ```
 
 ### Bass Approach
-Warm, muted bass — triangle with heavy filtering:
+Warm, muted bass with heavy filtering:
 ```js
-note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
+note("c2 ~ e2 ~ f2 ~ g2 ~").s("Bass")
   .lpf(400).release(0.15).gain(0.7)
 ```
 
 ### Chords/Keys
-Detuned Rhodes feel — FM synth with filtering:
+Detuned Rhodes feel with filtering:
 ```js
-chord("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
+chord("<Cm7 Fm7 Ab^7 Gm7>").s("Stabs").voicing()
   .lpf(1500).gain(0.4).room(0.3)
 ```
 
@@ -396,19 +396,19 @@ chord("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
 ### Groove
 Heavy swing on hats:
 ```js
-s("hh*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2")
+s("ClosedHats*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2")
 ```
 
 ### Complete Template
 ```js
 setcps(82/240)
 stack(
-  s("bd ~ [~ bd] ~").lpf(2000).gain(0.7),
-  s("~ sd ~ sd").lpf(3000).gain(0.5).room(0.2),
-  s("hh*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2"),
-  note("c2 ~ e2 ~ f2 ~ g2 ~").sound("triangle")
+  s("Kicks ~ [~ Kicks] ~").lpf(2000).gain(0.7),
+  s("~ Snares ~ Snares").lpf(3000).gain(0.5).room(0.2),
+  s("ClosedHats*8").late("0 .06 0 .06").lpf(2500).gain("[.3 .5 .3 .6]*2"),
+  note("c2 ~ e2 ~ f2 ~ g2 ~").s("Bass")
     .lpf(400).release(0.15).gain(0.65),
-  chord("<Cm7 Fm7 Ab^7 Gm7>").sound("fm").fmi(1.5).fmh(2).voicing()
+  chord("<Cm7 Fm7 Ab^7 Gm7>").s("Stabs").voicing()
     .lpf(1500).gain(0.4).room(0.3),
   s("noise:1").gain(0.04).lpf(3000).crush(10)
 )

@@ -106,8 +106,9 @@ stack(
 - \`.segment(n)\` — sample n times per cycle
 - \`.chunk(n, fn)\` — apply fn to chunks
 
-## Built-in Synths (use with .s())
-sine, sawtooth, square, triangle, fm (with .fmi() and .fmh())
+## Local Samples for Melodic Parts (use with .s())
+For melodic parts use: Synth (leads), Stabs (chords/voicings), Bass (basslines), Chords (chord stabs)
+Do NOT use built-in synths (sine, sawtooth, square, triangle, fm) as sound sources.
 
 ## Common Samples (use with s() or .s())
 ### Dirt-Samples (always available):
@@ -126,20 +127,20 @@ All gm_* names (gm_epiano1, gm_piano, gm_synth_bass_2, gm_pad_warm, etc.) are
 BROKEN due to a dual-registry issue. They will produce silence or errors.
 NEVER use any gm_* sound name.
 
-### For melodic/harmonic parts, use built-in synths:
-- fm (electric piano feel): note("c4").sound("fm").fmi(1.5).fmh(2)
-- sawtooth (bass, pads, strings): note("c2").sound("sawtooth").lpf(400)
-- triangle (soft leads, flute-like): note("c4").sound("triangle")
-- sine (sub-bass, pure tones): note("c2").sound("sine").lpf(200)
-- square (organ-like, chiptune): note("c4").sound("square")
+### For melodic/harmonic parts, use local samples:
+- Stabs (chords, voicings, electric piano feel): chord("<Cm7 Fm7>").s("Stabs").voicing()
+- Bass (basslines, sub-bass): note("c2").s("Bass").lpf(400)
+- Synth (leads, melodies, flute-like): note("c4").s("Synth")
+- Chords (chord stabs, pads): note("c4").s("Chords")
 
 ### Dirt-sample tonal instruments (also work for melodies):
 arpy, jvbass, casio, juno, moog, pluck, pad, sax, hoover, stab
 
-## IMPORTANT: Do NOT use .bank() or gm_* names
+## IMPORTANT: Do NOT use .bank(), gm_* names, or built-in synths as sound sources
 The .bank("RolandTR808") syntax is NOT supported in this environment.
 Instead, use the 808 samples directly: s("808bd") instead of s("bd").bank("RolandTR808")
-All gm_* soundfont names are BROKEN — use built-in synths (fm, sawtooth, triangle, sine, square) instead.
+All gm_* soundfont names are BROKEN — use local samples (Synth, Stabs, Bass, Chords) instead.
+Do NOT use built-in synths (fm, sawtooth, triangle, sine, square) as sound sources — use local samples instead.
 
 ## Tempo Reference
 - setcps(0.5) = 120 BPM (standard house/techno)
@@ -170,7 +171,7 @@ stack(
   s("bd ~ [~ bd] ~"),
   s("~ sd:3 ~ sd:3").room(0.8).roomsize(0.9).gain(0.6),
   s("hh*8").gain(0.2).lpf(3000).pan("<0.3 0.7>"),
-  note("<[c2 ~] [~ c2] [c2 ~] [eb2 ~]>").s("sawtooth")
+  note("<[c2 ~] [~ c2] [c2 ~] [eb2 ~]>").s("Bass")
     .lpf(800).resonance(0.3).gain(0.35).room(0.6)
     .attack(0.01).decay(0.1).sustain(0.3).release(0.4)
 )
@@ -183,9 +184,9 @@ stack(
   s("808bd ~ ~ ~ ~ ~ 808bd ~").gain(1.1),
   s("~ ~ ~ 808sd ~ ~ ~ 808sd").room(0.15).gain(0.95),
   s("808hc*8").gain("[.4 .7 .5 .8]*1").late("0 .04 0 .04"),
-  note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("sawtooth").lpf(400)
+  note("<[c1 ~] [f1 ~] [bb0 ~] [ab0 ~]>").s("Bass").lpf(400)
     .gain(1.0).attack(0.01).decay(0.5).sustain(0.8).release(0.3),
-  chord("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("fm").fmi(1.5).fmh(2)
+  chord("<Cm7 Fm7 Bb7 Ab^7>/2").voicing().s("Stabs")
     .struct("x ~ [~ x] ~").room(0.3).gain(0.5)
     .attack(0.01).release(0.2)
 )

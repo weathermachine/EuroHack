@@ -19,6 +19,8 @@
 | **Styling** | CSS Modules + CSS custom properties | Scoped styles, `--beat-intensity` driven from JS |
 | **Font** | JetBrains Mono | Monospace with ligatures, terminal aesthetic |
 | **Desktop Build** | electron-builder | Cross-platform packaging |
+| **Music Engine** | `server/engine/` | MusicTheory, PatternGenerator, Transforms — server-side pattern generation |
+| **Visualization** | Canvas 2D + `hydra-synth` | Dual mode: Events (Canvas 2D event display) + Hydra (GPU shaders) |
 | **Testing** | Vitest + Playwright | Unit + E2E |
 | **Linting** | ESLint + Prettier | Consistent code style |
 
@@ -40,7 +42,13 @@ ai-rack/
 ├── server/
 │   ├── index.ts              # Express server entry
 │   ├── routes/
-│   │   └── chat.ts           # POST /api/chat — Claude proxy
+│   │   ├── chat.ts           # POST /api/chat — Claude proxy
+│   │   └── engine.ts         # REST API for music engine (/api/engine/*)
+│   ├── engine/
+│   │   ├── index.ts           # Engine barrel export
+│   │   ├── MusicTheory.ts     # Scales, chords, progressions, arpeggios, euclidean rhythms
+│   │   ├── PatternGenerator.ts# Drum/bass/melody/complete pattern generation
+│   │   └── Transforms.ts      # Mood shifting, energy levels, refinements, effects
 │   ├── prompts/
 │   │   ├── system.ts         # System prompt builder
 │   │   └── strudel-ref.ts    # Strudel reference (cached)
@@ -62,8 +70,12 @@ ai-rack/
 │   │   │       ├── FilterCurve.ts        # Frequency response
 │   │   │       └── EnvelopeWidget.ts     # ADSR shape
 │   │   ├── Viz/
-│   │   │   ├── HydraCanvas.tsx       # Hydra synth instance
-│   │   │   └── useHydra.ts           # Hydra lifecycle hook
+│   │   │   ├── HydraCanvas.tsx       # Dual-mode viz: events canvas + hydra canvas
+│   │   │   ├── HydraCanvas.module.css
+│   │   │   ├── useHydra.ts           # Hydra lifecycle hook
+│   │   │   ├── shaderPresets.ts      # Hydra shader presets library
+│   │   │   ├── VizControls.tsx       # Shader preset dropdown (hydra mode)
+│   │   │   └── VizControls.module.css
 │   │   ├── Chat/
 │   │   │   ├── ChatInterface.tsx     # Message list + input
 │   │   │   ├── ChatMessage.tsx       # Single message rendering
@@ -75,7 +87,8 @@ ai-rack/
 │   │   ├── patternStore.ts   # Current code, pattern ref, playback state
 │   │   ├── chatStore.ts      # Message history, streaming state
 │   │   ├── audioStore.ts     # FFT data, RMS, beat flags
-│   │   └── uiStore.ts        # Panel focus, CRT toggle, fullscreen
+│   │   ├── uiStore.ts        # Panel focus, CRT toggle, fullscreen
+│   │   └── vizStore.ts       # Viz mode (events/hydra), shader selection, custom draw
 │   ├── audio/
 │   │   ├── engine.ts         # Strudel init, play/stop, pattern swap
 │   │   ├── analyzer.ts       # AnalyserNode + Meyda feature extraction
@@ -93,7 +106,8 @@ ai-rack/
 │       ├── strudel.d.ts      # Strudel type augmentations
 │       └── messages.ts       # Chat message types
 ├── public/
-│   └── fonts/                # JetBrains Mono woff2
+│   ├── fonts/                # JetBrains Mono woff2
+│   └── samples/              # Local sample library (WAV files + index.json manifest)
 ├── docs/
 │   ├── architecture.md       # This file
 │   └── ux-design-spec.md     # UX specification
@@ -111,7 +125,8 @@ ai-rack/
   <AudioReactiveProvider>          ← Meyda → CSS custom props
     <PanelLayout>                  ← react-resizable-panels
       ├── <StrudelRepl />          ← CodeMirror 6 + inline widgets
-      ├── <HydraCanvas />          ← Hydra <canvas> filling panel
+      ├── <HydraCanvas />          ← Dual-mode: events canvas OR hydra canvas
+      │     └── <VizControls />    ← Shader preset dropdown (hydra mode only)
       └── <ChatInterface />        ← message list + input
     </PanelLayout>
     <StatusBar />                  ← fixed bottom row
@@ -127,7 +142,11 @@ ai-rack/
 
 **`StrudelRepl`** — Hosts CodeMirror 6 editor. On `Cmd+Enter`, evaluates code through `audio/engine.ts`. Registers CM `ViewPlugin` decorations that render inline viz widgets (waveforms, pattern grids, ADSR) as canvas elements positioned via CM's coordinate system.
 
-**`HydraCanvas`** — Creates a Hydra synth instance with `makeGlobal: false`, `autoLoop: false`. Mounts canvas to panel div. Resizes via `ResizeObserver`. Hydra code is evaluated from the same REPL code (Strudel's `initHydra()` bridges `H()` function).
+**`HydraCanvas`** — Dual-mode visualization panel controlled by `vizStore.vizMode`:
+- **Events mode** (`'events'`): Canvas 2D rendering of live Strudel events (notes, samples) as they trigger. Supports custom draw functions via `vizStore.setCustomDraw()`.
+- **Hydra mode** (`'hydra'`): GPU shader visuals via `hydra-synth`. Shader presets selectable via `VizControls` dropdown. Resizes via `ResizeObserver`.
+
+**`VizControls`** — Dropdown selector for Hydra shader presets (from `shaderPresets.ts`). Only visible when `vizMode === 'hydra'`.
 
 **`ChatInterface`** — Uses React Virtuoso for virtualized message list. Streams AI responses token-by-token with typewriter animation. Code blocks render with syntax highlighting and `[▶]` button that injects code into the REPL store.
 
@@ -209,6 +228,23 @@ interface UIStore {
 }
 ```
 
+### `vizStore`
+
+```typescript
+interface VizStore {
+  customDrawCode: string | null;       // Custom Canvas 2D draw function code
+  drawFn: Function | null;             // Compiled draw function
+  error: string | null;                // Last compilation error
+  vizMode: 'events' | 'hydra';        // Current visualization mode
+  selectedShader: string;              // Active Hydra shader preset ID
+
+  setCustomDraw: (code: string) => void;
+  clearCustomDraw: () => void;
+  setVizMode: (mode: 'events' | 'hydra') => void;
+  setSelectedShader: (id: string) => void;
+}
+```
+
 ### Data Flow Between Stores
 
 - **User types in chat** → `chatStore.sendMessage()` → SSE request to backend → streamed response updates `chatStore.streamBuffer` → on tool call `update_pattern`, writes new code to `patternStore.code` → REPL reflects change → auto-evaluate triggers `patternStore.evaluate()`
@@ -219,7 +255,7 @@ interface UIStore {
 
 ## 5. Backend Architecture
 
-Lightweight Express server — only job is proxying Claude API calls with state injection.
+Express server handling Claude API proxying with state injection, plus a music engine API for pattern generation and transformation.
 
 ### Routes
 
@@ -264,6 +300,37 @@ const response = await anthropic.messages.create({
   // Enable eager streaming for faster first token
 });
 ```
+
+### Music Engine Routes
+
+```
+POST /api/engine/generate-drums         { style, complexity }
+POST /api/engine/generate-bassline      { key, style }
+POST /api/engine/generate-melody        { root, scale, length, octaveRange }
+POST /api/engine/generate-complete      { style, key, bpm }
+POST /api/engine/generate-variation     { pattern, type }
+POST /api/engine/generate-fill          { style, bars }
+POST /api/engine/generate-polyrhythm    { sounds, hitCounts, steps }
+POST /api/engine/scale                  { root, scale, octave }
+POST /api/engine/chord-progression      { key, style }
+POST /api/engine/euclidean              { hits, steps, sound }
+POST /api/engine/arpeggio               { chord, direction, octave }
+POST /api/engine/transform              { pattern, action, ...params }
+GET  /api/engine/info                   Lists available styles, scales, moods
+```
+
+### Engine-Backed Claude Tools
+
+The chat route exposes these as Anthropic API tools that Claude can call directly:
+- `generate_pattern` — Full composition generation
+- `generate_drums` — Genre-specific drum patterns
+- `generate_bassline` — Style-specific basslines
+- `generate_melody` — Scale-aware melody generation
+- `generate_chord_progression` — Progression by style
+- `shift_mood` — Transform pattern mood (dark, bright, melancholic, etc.)
+- `set_energy` — Adjust energy level (0–10)
+
+All generated patterns use **local samples only** (Kicks, Snares, ClosedHats, OpenHats, Crashes, Claps, Bass, Synth, Stabs, Chords, Vox) — never dirt-samples, GM soundfonts, or bank samples.
 
 ### SSE Proxy Flow
 

@@ -57,7 +57,7 @@ Use `:n` to select variants (0-indexed). Example: `s("bd:3")` plays the 4th bd v
 
 ## Instrument Samples (CONFIRMED — dirt-samples)
 
-These are your **primary melodic/harmonic tools** alongside built-in synths.
+These are your **primary melodic/harmonic tools**.
 
 | Sample | Variants | Description |
 |--------|----------|-------------|
@@ -157,38 +157,100 @@ These are your **primary melodic/harmonic tools** alongside built-in synths.
 | `breaks157` | 1 (0) | Breakbeat at 157 BPM |
 | `breaks165` | 1 (0) | Breakbeat at 165 BPM |
 
-## Built-in Synths (ALWAYS AVAILABLE)
+## Melodic/Harmonic Samples
 
-For melodic/harmonic parts, use built-in synths instead of GM soundfonts:
+For melodic and harmonic parts, use local samples instead of GM soundfonts or built-in synths:
 
-| Name | Description | Best for |
-|------|-------------|----------|
-| `sine` | Pure sine wave | Sub-bass, soft pads |
-| `sawtooth` | Sawtooth wave (bright, buzzy) | Leads, bass, pads |
-| `square` | Square wave (hollow, reedy) | Chiptune, reedy leads |
-| `triangle` | Triangle wave (soft, mellow) | Soft leads, keys |
-| `fm` | FM synthesis | Electric piano, bells, bass |
+| Name | Variants | Best for |
+|------|----------|----------|
+| `Synth` | 62 | Leads, melodies, soft textures |
+| `Stabs` | 79 | Chords, voicings, stabs |
+| `Bass` | 46 | Basslines, sub-bass |
+| `Chords` | 270 | Chord stabs, progressions |
 
 ```js
 // Use these INSTEAD of gm_epiano1, gm_piano, gm_synth_bass_2, etc.
-// Electric piano substitute:
-chord("<Cm7 Fm7 Ab^7 G7>").sound("fm").fmi(1.5).fmh(2).voicing().gain(0.5)
+// Chord progression:
+chord("<Cm7 Fm7 Ab^7 G7>").s("Stabs").voicing().gain(0.5)
 
-// Pad substitute:
-note("<Cm7 Ab^7>").sound("sawtooth").lpf(800).release(1).room(0.6).gain(0.3)
+// Pad/chord layer:
+note("<Cm7 Ab^7>").s("Chords").lpf(800).release(1).room(0.6).gain(0.3)
 
-// Bass substitute:
-note("c2 ~ e2 g2").sound("sawtooth").lpf(400).release(0.1).gain(0.8)
+// Bass:
+note("c2 ~ e2 g2").s("Bass").lpf(400).release(0.1).gain(0.8)
 
 // Warm lead:
-note("c4 e4 g4 c5").sound("triangle").release(0.3).room(0.3)
+note("c4 e4 g4 c5").s("Synth").release(0.3).room(0.3)
 ```
+
+## Local Sample Library (Custom Samples)
+
+These are the user's own samples loaded from `public/samples/`. They are registered at startup and available alongside dirt-samples. Use them exactly like dirt-samples with `s()` and `:n` for variant selection (0-indexed).
+
+| Sample | Variants | Description |
+|--------|----------|-------------|
+| `eot` | 15 (0-14) | 808 drum machine one-shots (named "eot" = eight-oh-eight, to avoid Strudel parsing "808" as a number) |
+| `Bass` | 46 (0-45) | Bass synth hits, sub-bass, wobbles, filtered bass |
+| `Chords` | 270 (0-269) | Chord stabs and progressions — large collection |
+| `Claps` | 34 (0-33) | Clap one-shots |
+| `ClosedHats` | 40 (0-39) | Closed hi-hat one-shots |
+| `Crashes` | 30 (0-29) | Crash and cymbal one-shots |
+| `Kicks` | 63 (0-62) | Kick drum one-shots — wide variety |
+| `OpenHats` | 32 (0-31) | Open hi-hat one-shots |
+| `Snares` | 62 (0-61) | Snare drum one-shots — wide variety |
+| `Stabs` | 79 (0-78) | Synth stabs and hits |
+| `Synth` | 62 (0-61) | Synth one-shots and textures |
+| `Vox` | 126 (0-125) | Vocal samples and chops |
+
+**Note:** Local sample names are **case-sensitive** — use `Kicks` not `kicks`. These names start with uppercase.
+
+```js
+// Local sample examples:
+s("Kicks:5 Kicks:12 Snares:3 Snares:20")
+
+// Layer local kicks with dirt-sample hats:
+stack(
+  s("Kicks:0 Kicks:22"),
+  s("ClosedHats*4"),
+  s("Claps").every(2, x => x)
+)
+
+// Cycle through chord variants:
+s("Chords").n("0 15 42 88").slow(4)
+
+// Combine local and dirt-samples freely:
+stack(
+  s("Kicks:5 ~ Kicks:12 ~"),
+  s("hh*4"),
+  s("Stabs:3").slow(2),
+  s("Vox:42").loopAt(4)
+)
+```
+
+### IMPORTANT: ALWAYS use local samples
+
+**You MUST use local samples for ALL drum and one-shot sounds.** Do NOT use dirt-samples (`bd`, `sd`, `hh`, etc.) — they are loaded but should NOT be used. The local library is the user's curated collection and is the only approved source for samples.
+
+**Mapping from dirt-samples to local samples:**
+| Instead of (dirt-sample) | Use (local sample) |
+|--------------------------|---------------------|
+| `bd`, `bassdm`, `clubkick` | `Kicks` |
+| `sd`, `sn` | `Snares` |
+| `hh`, `linnhats` | `ClosedHats` |
+| `oh` | `OpenHats` |
+| `cp` | `Claps` |
+| `cr` | `Crashes` |
+| `808bd`, `808sd`, `808hc` | `eot` |
+| `bass`, `jvbass`, `jungbass` | `Bass` |
+| `stab`, `hoover` | `Stabs` |
+| `arpy`, `casio`, `juno`, `moog` | `Synth` |
+| `mouth`, `speech`, `yeah` | `Vox` |
 
 ## Tips
 
 - Start with low variant numbers (`:0`, `:1`) — they're usually the cleanest
-- Use `n()` to cycle through variants: `s("bd").n("0 3 5 12")`
-- Layer kicks for weight: `stack(s("bd"), s("808bd:5").gain(0.6))`
-- 808 samples are great for hip hop and trap — they have long tails, use `.cut(1)` to manage
-- **For chords/melodies**: Use `fm` (electric piano feel), `sawtooth` (bright), `triangle` (soft), `sine` (pure) with `.note()`
-- **NEVER use `gm_*` names** — they are not loaded in this environment
+- Use `n()` to cycle through variants: `s("Kicks").n("0 3 5 12")`
+- Layer kicks for weight: `stack(s("Kicks:0"), s("eot:5").gain(0.6))`
+- `eot` samples are great for hip hop and trap — they have long tails, use `.cut(1)` to manage
+- **For chords/melodies**: Use `Stabs` (chords/voicings), `Synth` (leads), `Bass` (basslines), `Chords` (chord stabs) with `.note()` or `chord()`
+- **NEVER use `gm_*` names, dirt-sample names, or built-in synths (`fm`, `sawtooth`, `sine`, `square`, `triangle`)**

@@ -28,8 +28,8 @@ These create pattern objects. The return value is what gets played.
 ### `s(mininotation)` / `sound(mininotation)`
 Create a pattern from sample names.
 ```js
-s("bd sd hh hh")
-sound("bd sd hh hh")  // identical
+s("Kicks Snares ClosedHats ClosedHats")
+sound("Kicks Snares ClosedHats ClosedHats")  // identical
 ```
 
 ### `note(mininotation)`
@@ -42,16 +42,16 @@ note("60 64 67 71")
 ### `n(mininotation)`
 Create a pattern of numbers, typically for selecting sample variants or scale degrees.
 ```js
-n("0 2 4 6").scale("C:minor").sound("fm").fmi(1.5).fmh(2)
+n("0 2 4 6").scale("C:minor").s("Stabs")
 ```
 
 ### `stack(pat1, pat2, ...)`
 Layer multiple patterns simultaneously. Takes **individual arguments**, NOT an array.
 ```js
 stack(
-  s("bd sd bd sd"),
-  s("hh*8"),
-  note("c2 e2").sound("sawtooth").lpf(400).release(0.1)
+  s("Kicks Snares Kicks Snares"),
+  s("ClosedHats*8"),
+  note("c2 e2").s("Bass").lpf(400).release(0.1)
 )
 ```
 
@@ -59,8 +59,8 @@ stack(
 Play patterns one after another, each for one cycle.
 ```js
 cat(
-  s("bd sd bd sd"),
-  s("hh*8 cp")
+  s("Kicks Snares Kicks Snares"),
+  s("ClosedHats*8 Claps")
 )
 ```
 
@@ -82,7 +82,7 @@ Set cycles per second (tempo). **Must be on its own line.**
 
 ```js
 setcps(0.5)
-s("bd sd")
+s("Kicks Snares")
 ```
 
 ### `hush()`
@@ -174,18 +174,6 @@ These are chained onto pattern expressions with dot notation.
 | `.mode(m)` | Voicing mode | `.voicing().mode("below")` |
 | `.anchor(n)` | Voicing anchor note | `.voicing().anchor("c4")` |
 
-## FM Synthesis Parameters
-
-For use with `fm` sound source or FM synth patches:
-| Method | Description | Example |
-|--------|-------------|---------|
-| `.fmi(n)` | FM modulation index | `.fmi(2)` |
-| `.fmh(n)` | FM harmonicity ratio | `.fmh(1.5)` |
-
-```js
-note("c3 e3 g3 b3").sound("fm").fmi(2).fmh(1.5)
-```
-
 ## Code Structure
 
 Always follow this structure:
@@ -196,9 +184,9 @@ setcps(0.5)
 
 // 2. Pattern expression (last thing — this is what plays)
 stack(
-  s("bd sd bd sd").gain(0.9),
-  s("hh*8").gain(0.6),
-  note("c2 e2 g2 e2").sound("sawtooth").lpf(400).release(0.1)
+  s("Kicks Snares Kicks Snares").gain(0.9),
+  s("ClosedHats*8").gain(0.6),
+  note("c2 e2 g2 e2").s("Bass").lpf(400).release(0.1)
 )
 ```
 
@@ -207,8 +195,8 @@ stack(
 Oscillators can be used as modulation sources anywhere a number is expected:
 
 ```js
-s("bd sd").lpf(sine.range(200, 2000).slow(4))
-s("hh*8").gain(sine.range(0.3, 0.8))
+s("Kicks Snares").lpf(sine.range(200, 2000).slow(4))
+s("ClosedHats*8").gain(sine.range(0.3, 0.8))
 s("pad").pan(sine.slow(2))
 ```
 

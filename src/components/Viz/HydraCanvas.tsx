@@ -2,6 +2,9 @@ import { useRef, useEffect } from 'react';
 import { usePatternStore } from '@/stores/patternStore';
 import { useVizStore } from '@/stores/vizStore';
 import { getVizEvents, clearVizEvents, expireVizEvents, type VizEvent } from '@/audio/vizEvents';
+import { useHydra } from './useHydra';
+import { SHADER_PRESETS } from './shaderPresets';
+import VizControls from './VizControls';
 import styles from './HydraCanvas.module.css';
 
 const SOUND_COLORS: Record<string, string> = {
@@ -15,21 +18,28 @@ const SOUND_COLORS: Record<string, string> = {
   tom: '#ff6644',
 };
 
-function getColor(s: string): string {
-  const base = s.split(':')[0];
+function getColor(s: unknown): string {
+  const str = typeof s === 'string' ? s : String(s ?? '');
+  const base = str.split(':')[0];
   return SOUND_COLORS[base] || '#e0e0e0';
 }
 
 export default function HydraCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const eventsCanvasRef = useRef<HTMLCanvasElement>(null);
+  const hydraCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const laneMapRef = useRef<Map<string, number>>(new Map());
   const isPlaying = usePatternStore((s) => s.isPlaying);
   const customDrawFn = useVizStore((s) => s.drawFn);
   const vizError = useVizStore((s) => s.error);
+  const vizMode = useVizStore((s) => s.vizMode);
+  const setVizMode = useVizStore((s) => s.setVizMode);
+  const selectedShader = useVizStore((s) => s.selectedShader);
 
   const lastWorkingCode = usePatternStore((s) => s.lastWorkingCode);
+
+  const hydra = useHydra();
 
   // Clear viz state when playback stops or code changes
   useEffect(() => {
@@ -40,15 +50,14 @@ export default function HydraCanvas() {
   }, [isPlaying]);
 
   useEffect(() => {
-    // Code changed — clear old lanes so they rebuild from new events
     clearVizEvents();
     laneMapRef.current.clear();
   }, [lastWorkingCode]);
 
-  // Sync canvas size
+  // Sync events canvas size
   useEffect(() => {
     const container = containerRef.current;
-    const canvas = canvasRef.current;
+    const canvas = eventsCanvasRef.current;
     if (!container || !canvas) return;
 
     function syncSize() {
@@ -63,15 +72,72 @@ export default function HydraCanvas() {
     return () => observer.disconnect();
   }, []);
 
-  // Render loop
+  // Sync hydra canvas size
   useEffect(() => {
+    const container = containerRef.current;
+    const canvas = hydraCanvasRef.current;
+    if (!container || !canvas) return;
+
+    function syncSize() {
+      const rect = container!.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      canvas!.width = w;
+      canvas!.height = h;
+      hydra.resize(w, h);
+    }
+
+    syncSize();
+    const observer = new ResizeObserver(syncSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [hydra]);
+
+  // Initialize / teardown Hydra when switching to hydra mode
+  useEffect(() => {
+    if (vizMode !== 'hydra') {
+      hydra.stopAudioReactive();
+      return;
+    }
+
+    const canvas = hydraCanvasRef.current;
+    if (!canvas) return;
+
+    if (!hydra.isInitialized) {
+      hydra.init(canvas);
+    }
+
+    hydra.startAudioReactive();
+
+    // Apply selected shader preset
+    const preset = SHADER_PRESETS.find(p => p.id === useVizStore.getState().selectedShader);
+    hydra.applyShader(preset?.code ?? `osc(10, 0.1, () => window.audio.rmsPeak * 4).color(0.9, 0.2, () => window.audio.spectral / 800).rotate(() => window.audio.energySmooth * 0.5).scale(() => 1 + window.audio.beat * 0.5).brightness(() => window.audio.beat * 0.2).out()`);
+
+    return () => {
+      hydra.stopAudioReactive();
+    };
+  }, [vizMode, hydra]);
+
+  // Apply shader when selectedShader changes
+  useEffect(() => {
+    if (vizMode !== 'hydra' || !hydra.isInitialized) return;
+    const preset = SHADER_PRESETS.find(p => p.id === selectedShader);
+    if (preset) {
+      hydra.applyShader(preset.code);
+    }
+  }, [selectedShader, vizMode, hydra]);
+
+  // Events render loop — only runs when vizMode is 'events'
+  useEffect(() => {
+    if (vizMode !== 'events') return;
+
     let running = true;
 
     function draw() {
       if (!running) return;
       rafRef.current = requestAnimationFrame(draw);
 
-      const canvas = canvasRef.current;
+      const canvas = eventsCanvasRef.current;
       if (!canvas) return;
       const { width, height } = canvas;
       if (width === 0 || height === 0) return;
@@ -132,11 +198,38 @@ export default function HydraCanvas() {
       running = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [isPlaying, customDrawFn]);
+  }, [vizMode, isPlaying, customDrawFn]);
 
   return (
     <div ref={containerRef} className={styles.container}>
-      <canvas ref={canvasRef} className={styles.canvas} />
+      {/* Mode switch toggle */}
+      <div className={styles.modeSwitch}>
+        <button
+          className={vizMode === 'events' ? styles.active : ''}
+          onClick={() => setVizMode('events')}
+        >Events</button>
+        <button
+          className={vizMode === 'hydra' ? styles.active : ''}
+          onClick={() => setVizMode('hydra')}
+        >Hydra</button>
+      </div>
+
+      {vizMode === 'hydra' && <VizControls />}
+
+      {/* Events canvas - visible when mode is events */}
+      <canvas
+        ref={eventsCanvasRef}
+        className={styles.canvas}
+        style={{ display: vizMode === 'events' ? 'block' : 'none' }}
+      />
+
+      {/* Hydra canvas - visible when mode is hydra */}
+      <canvas
+        ref={hydraCanvasRef}
+        className={styles.canvas}
+        style={{ display: vizMode === 'hydra' ? 'block' : 'none' }}
+      />
+
       {vizError && (
         <div className={styles.error}>Viz error: {vizError}</div>
       )}

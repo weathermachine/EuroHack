@@ -1,20 +1,48 @@
 import { usePatternStore } from '@/stores/patternStore';
 import { pushVizEvent, clearVizEvents } from './vizEvents';
+import { createAnalyzer, startAnalysis } from './analyzer';
 
 let initialized = false;
 let strudelRepl: any = null;
+let analyzerConnected = false;
 
 export async function initAudio(): Promise<void> {
   if (initialized) return;
 
-  const { initStrudel, evaluate } = await import('@strudel/web');
+  const { initStrudel, evaluate, getAudioContext } = await import('@strudel/web');
+
+  // Install audio tap BEFORE Strudel initializes so we catch superdough's
+  // master gain → destination connection. When any node connects to the
+  // AudioContext destination, we also wire it to our AnalyserNode for Meyda.
+  installAudioTap(getAudioContext);
+
   strudelRepl = await initStrudel();
+
+  // Pre-initialize AudioWorklets to avoid "AudioWorklet does not have a valid
+  // AudioWorkletGlobalScope" errors on first pattern trigger.
+  try {
+    const ctx = getAudioContext();
+    if (ctx && ctx.audioWorklet) {
+      // Trigger superdough worklet loading by evaluating a silent pattern
+      await evaluate('silence', false);
+      // Give worklets a moment to initialize
+      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('[AI Rack] AudioWorklets pre-initialized');
+    }
+  } catch {
+    // Non-fatal — worklets will load on first real trigger
+  }
 
   // Load sample sources. All via evaluate() so they register in
   // Strudel's own sound registry (same scope as the audio engine).
 
   // 1. Dirt-Samples: bd, sd, hh, cp, 808bd, 808sd, etc.
   await evaluate(`samples('github:tidalcycles/dirt-samples')`, false);
+
+  // 1b. Local user samples from public/samples/
+  //     Loaded from a pre-built index.json manifest so we don't need directory listing.
+  //     Usage: s("Kicks"), s("Kicks:3"), s("Bass:12"), etc.
+  await loadLocalSamples(evaluate);
 
   // 2. GM Soundfonts: gm_epiano1, gm_trumpet, gm_string_ensemble1, etc.
   //    Must be loaded via @strudel/soundfonts's registerSoundfonts() BUT called
@@ -48,7 +76,7 @@ export async function initAudio(): Promise<void> {
   (globalThis as any).__vizTrigger = (hap: any, _deadline: number, duration: number) => {
     const v = hap.value || hap;
     pushVizEvent({
-      s: v.s || v.sound || 'synth',
+      s: String(v.s || v.sound || 'synth'),
       gain: v.gain ?? 0.8,
       duration: duration ?? 0.2,
       triggeredAt: performance.now(),
@@ -63,6 +91,44 @@ export async function initAudio(): Promise<void> {
 
   initialized = true;
   console.log('[AI Rack] Strudel initialized');
+}
+
+/**
+ * Monkey-patch AudioNode.prototype.connect BEFORE Strudel initializes.
+ * When superdough connects its master GainNode to ctx.destination,
+ * we intercept that source node and also feed it to our Meyda analyzer.
+ * This gives us real-time RMS, energy, spectral centroid, and beat detection.
+ */
+function installAudioTap(getAudioContext: () => AudioContext) {
+  if (analyzerConnected) return;
+
+  const origConnect = AudioNode.prototype.connect;
+
+  AudioNode.prototype.connect = function (dest: any, ...args: any[]) {
+    const result = (origConnect as any).call(this, dest, ...args);
+
+    // Detect when a node connects to the AudioContext destination.
+    // Set analyzerConnected FIRST to prevent re-entrancy — createAnalyzer
+    // internally calls .connect() which would trigger this handler again.
+    if (!analyzerConnected && dest instanceof AudioDestinationNode) {
+      analyzerConnected = true; // Guard BEFORE calling createAnalyzer
+      try {
+        const ctx = getAudioContext();
+        if (ctx) {
+          createAnalyzer(ctx, this);
+          startAnalysis();
+          // Restore original connect now that analyzer is set up
+          AudioNode.prototype.connect = origConnect;
+          console.log('[AI Rack] Audio analyzer tapped from', this.constructor.name);
+        }
+      } catch (e) {
+        analyzerConnected = false; // Reset on failure so it can retry
+        console.warn('[AI Rack] Audio tap failed:', e);
+      }
+    }
+
+    return result;
+  } as any;
 }
 
 /**
@@ -117,6 +183,28 @@ async function loadBankSamples(evaluate: (code: string, autoplay?: boolean) => P
     } catch {
       // Non-fatal
     }
+  }
+}
+
+/**
+ * Load local user samples from public/samples/.
+ * Reads a pre-built index.json manifest that maps folder names to file arrays.
+ * Registers each folder as a Strudel sound name (e.g., s("Kicks"), s("Bass:3")).
+ */
+async function loadLocalSamples(evaluate: (code: string, autoplay?: boolean) => Promise<any>) {
+  try {
+    const res = await fetch('/samples/index.json');
+    if (!res.ok) {
+      console.warn('[AI Rack] No local samples manifest found at /samples/index.json');
+      return;
+    }
+    const sampleMap = await res.json();
+    (globalThis as any).__localSamples = sampleMap;
+    await evaluate(`samples(__localSamples, '/samples/')`, false);
+    const names = Object.keys(sampleMap);
+    console.log(`[AI Rack] Local samples registered: ${names.join(', ')} (${names.length} groups)`);
+  } catch (e) {
+    console.warn('[AI Rack] Failed to load local samples:', e);
   }
 }
 

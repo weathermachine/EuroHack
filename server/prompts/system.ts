@@ -95,10 +95,12 @@ ${ctx.code}
   block += `\n\n${VIZ_REFERENCE}`;
 
   block += `\n\n## Reminders
-1. Always return COMPLETE working code via the update_pattern tool — not diffs or patches.
-2. CRITICAL: setcps() is a standalone function. Put it on its own line BEFORE the pattern. NEVER chain it.
-3. The LAST expression must be the pattern — it's what gets played.
-4. Use the update_visualization tool for visual changes (provide the function body, not the declaration).`;
+1. NEVER erase the user's existing code. When the user asks to add or change something, take the CURRENT CODE shown above and modify it — add layers, change parameters, swap sounds — but keep everything else intact. Only start from scratch if the user explicitly asks for a completely new pattern.
+2. Always return COMPLETE working code via the update_pattern tool — include the existing code with your modifications applied.
+3. CRITICAL: setcps() is a standalone function. Put it on its own line BEFORE the pattern. NEVER chain it.
+4. The LAST expression must be the pattern — it's what gets played.
+5. Use the update_visualization tool for visual changes (provide the function body, not the declaration).
+6. ONLY use supported chord types with .voicing(): C, Cm, C7, C^7, Cm7, Cm9, C9, Cdim, Caug, C6. NEVER use sus2, sus4, 7sus4, add9, 7#9, m7b5.`;
 
   return block;
 }
