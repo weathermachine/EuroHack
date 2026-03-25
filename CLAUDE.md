@@ -26,7 +26,7 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 
 ## Architecture
 
-**Frontend (src/):** React 18 + TypeScript + Vite. Three resizable panels: Strudel REPL (CodeMirror 6), Hydra canvas (GPU shaders), Chat (React Virtuoso). State via Zustand stores (`stores/`), subscribed from both React and imperative audio code. Path alias: `@/` → `src/`.
+**Frontend (src/):** React 18 + TypeScript + Vite. Four panels: Strudel REPL (CodeMirror 6, with active note highlighting), Hydra canvas (GPU shaders), Chat (React Virtuoso), Sample Browser (browsable tree of all samples). State via Zustand stores (`stores/`), subscribed from both React and imperative audio code. Path alias: `@/` → `src/`.
 
 **Backend (server/):** Express server proxying Claude API calls with SSE streaming. Constructs system prompts from a Strudel reference (`prompts/strudel-ref.ts`) + dynamic context (current code, playback state). Knowledge files in `server/knowledge/` provide domain expertise injected into prompts.
 
@@ -35,6 +35,7 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 ### Key Data Flows
 
 - **Chat → Audio:** User message → `chatStore` → SSE to backend → Claude responds with `update_pattern` tool call → `patternStore.evaluate()` → Strudel scheduler picks up new pattern within ~50ms (hot-swap via atomic reference replacement).
+- **Chat → Viz:** Claude can send `update_visualization` (Canvas 2D events) or `update_hydra` (GPU shader) to create/modify visuals. Both auto-switch the viz panel to the appropriate mode.
 - **Audio → UI:** Strudel → Web Audio → AnalyserNode → Meyda feature extraction → `audioStore` → CSS custom properties (`--beat-intensity`, `--rms`) → beat-reactive UI.
 - **Code → Audio:** CodeMirror edit → Cmd+Enter → `patternStore.evaluate()` → Strudel transpiles + schedules.
 
@@ -44,7 +45,7 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 - `chatStore` — message history, SSE streaming state
 - `audioStore` — FFT, RMS, spectral centroid, beat detection flags
 - `uiStore` — panel focus, CRT toggle, fullscreen
-- `vizStore` — visualization state (`vizMode: 'events' | 'hydra'`, `selectedShader`, custom draw code)
+- `vizStore` — visualization state (`vizMode: 'events' | 'hydra'`, `selectedShader`, `customHydraCode`, custom draw code)
 
 ### Audio Engine (src/audio/)
 

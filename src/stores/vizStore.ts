@@ -12,11 +12,15 @@ interface VizStore {
   vizMode: 'events' | 'hydra';
   /** Selected Hydra shader preset ID */
   selectedShader: string;
+  /** Custom Hydra shader code from AI. null = use preset */
+  customHydraCode: string | null;
 
   setCustomDraw: (code: string) => void;
   clearCustomDraw: () => void;
   setVizMode: (mode: 'events' | 'hydra') => void;
   setSelectedShader: (id: string) => void;
+  setCustomHydra: (code: string) => void;
+  clearCustomHydra: () => void;
 }
 
 export const useVizStore = create<VizStore>((set) => ({
@@ -25,6 +29,7 @@ export const useVizStore = create<VizStore>((set) => ({
   error: null,
   vizMode: 'events',
   selectedShader: 'audio-reactive-1',
+  customHydraCode: null,
 
   setCustomDraw: (code: string) => {
     try {
@@ -58,5 +63,9 @@ export const useVizStore = create<VizStore>((set) => ({
 
   setVizMode: (mode) => set({ vizMode: mode }),
 
-  setSelectedShader: (id) => set({ selectedShader: id }),
+  setSelectedShader: (id) => set({ selectedShader: id, customHydraCode: null }),
+
+  setCustomHydra: (code) => set({ customHydraCode: code }),
+
+  clearCustomHydra: () => set({ customHydraCode: null }),
 }));

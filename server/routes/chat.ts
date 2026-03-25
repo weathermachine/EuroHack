@@ -42,6 +42,21 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'update_hydra',
+    description:
+      'Update the Hydra GPU shader visualization. Provide Hydra code that creates audio-reactive visuals. The code runs in a Hydra synth context with access to: osc, shape, gradient, noise, voronoi, src, solid, render, s0-s3, o0-o3. Use window.audio for audio reactivity (rmsPeak, beat, rmsSmooth, energySmooth, energyPeak, spectral, fft). Always end with .out(). Switches viz panel to Hydra mode.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        code: {
+          type: 'string',
+          description: 'Hydra shader code. Uses arrow functions for audio reactivity: () => window.audio.rmsPeak. Must end with .out().',
+        },
+      },
+      required: ['code'],
+    },
+  },
+  {
     name: 'explain_music',
     description:
       'Explain music theory concepts, Strudel syntax, or pattern design decisions to the user.',
@@ -203,12 +218,14 @@ router.post('/chat', async (req, res) => {
 
     messages.push({ role: 'user', content: message });
 
-    console.log('[chat] sending request to Claude, messages:', messages.length);
+    const systemMessages = buildSystemMessages(context);
+    const systemSize = systemMessages.reduce((sum, m) => sum + m.text.length, 0);
+    console.log('[chat] sending request to Claude, messages:', messages.length, 'system prompt:', Math.round(systemSize / 1024) + 'KB');
 
     const stream = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
-      system: buildSystemMessages(context),
+      system: systemMessages,
       tools,
       messages,
       stream: true,
@@ -216,6 +233,8 @@ router.post('/chat', async (req, res) => {
 
     // Track tool use blocks
     const toolInputBuffers: Map<number, { id: string; name: string; input: string }> = new Map();
+    let hasContent = false; // Track whether Claude sent anything
+    let stopReason = '';
 
     for await (const event of stream) {
       switch (event.type) {
@@ -226,6 +245,9 @@ router.post('/chat', async (req, res) => {
               name: event.content_block.name,
               input: '',
             });
+            hasContent = true;
+          } else if (event.content_block.type === 'text') {
+            hasContent = true;
           }
           break;
 
@@ -268,18 +290,41 @@ router.post('/chat', async (req, res) => {
                 });
                 console.log('[chat] tool_use:', buf.name);
               }
-            } catch {
-              console.error('[chat] failed to parse tool input:', buf.input.slice(0, 100));
+            } catch (e) {
+              const errMsg = `Failed to parse tool input for ${buf.name}`;
+              console.error('[chat]', errMsg, ':', buf.input.slice(0, 200));
+              sse.sendEvent('text', { text: `\n\n⚠️ ${errMsg}` });
             }
             toolInputBuffers.delete(event.index);
           }
           break;
         }
 
+        case 'message_start':
+          // Capture usage/model info if available
+          if ((event as any).message?.stop_reason) {
+            stopReason = (event as any).message.stop_reason;
+          }
+          break;
+
+        case 'message_delta':
+          if ((event as any).delta?.stop_reason) {
+            stopReason = (event as any).delta.stop_reason;
+          }
+          break;
+
         case 'message_stop':
-          console.log('[chat] message complete');
+          console.log('[chat] message complete, stop_reason:', stopReason, 'hasContent:', hasContent);
           break;
       }
+    }
+
+    // If Claude sent nothing (empty response), tell the user
+    if (!hasContent) {
+      console.warn('[chat] Claude returned empty response, stop_reason:', stopReason);
+      sse.sendEvent('text', {
+        text: `⚠️ I wasn't able to generate a response. This can happen when the request is ambiguous or conflicts with my instructions. Try rephrasing your request or being more specific.${stopReason ? ` (stop reason: ${stopReason})` : ''}`,
+      });
     }
 
     sse.end();

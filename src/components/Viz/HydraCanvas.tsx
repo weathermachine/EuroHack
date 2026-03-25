@@ -36,6 +36,7 @@ export default function HydraCanvas() {
   const vizMode = useVizStore((s) => s.vizMode);
   const setVizMode = useVizStore((s) => s.setVizMode);
   const selectedShader = useVizStore((s) => s.selectedShader);
+  const customHydraCode = useVizStore((s) => s.customHydraCode);
 
   const lastWorkingCode = usePatternStore((s) => s.lastWorkingCode);
 
@@ -118,14 +119,22 @@ export default function HydraCanvas() {
     };
   }, [vizMode, hydra]);
 
-  // Apply shader when selectedShader changes
+  // Apply shader when selectedShader changes (preset mode)
   useEffect(() => {
     if (vizMode !== 'hydra' || !hydra.isInitialized) return;
+    // Don't override custom Hydra code with a preset
+    if (customHydraCode) return;
     const preset = SHADER_PRESETS.find(p => p.id === selectedShader);
     if (preset) {
       hydra.applyShader(preset.code);
     }
-  }, [selectedShader, vizMode, hydra]);
+  }, [selectedShader, vizMode, hydra, customHydraCode]);
+
+  // Apply custom Hydra code from AI
+  useEffect(() => {
+    if (vizMode !== 'hydra' || !hydra.isInitialized || !customHydraCode) return;
+    hydra.applyShader(customHydraCode);
+  }, [customHydraCode, vizMode, hydra]);
 
   // Events render loop — only runs when vizMode is 'events'
   useEffect(() => {

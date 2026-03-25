@@ -314,8 +314,9 @@ const response = await anthropic.messages.create({
   max_tokens: 2048,
   stream: true,
   tools: [
-    { name: 'update_pattern', description: 'Replace the current Strudel pattern code', input_schema: { code: 'string' } },
-    { name: 'update_visualization', description: 'Update Hydra visualization code', input_schema: { code: 'string' } },
+    { name: 'update_pattern', description: 'Evaluate Strudel code in the audio engine', input_schema: { code: 'string' } },
+    { name: 'update_visualization', description: 'Canvas 2D visualization (event-driven)', input_schema: { code: 'string' } },
+    { name: 'update_hydra', description: 'Hydra GPU shader visualization (audio-reactive)', input_schema: { code: 'string' } },
     { name: 'explain_music', description: 'Explain music theory or Strudel concepts', input_schema: { explanation: 'string' } },
     { name: 'suggest_changes', description: 'Suggest but do not apply changes', input_schema: { suggestions: 'string[]', code: 'string' } },
   ],

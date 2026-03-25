@@ -7,61 +7,60 @@ export interface PromptContext {
   error?: string;
 }
 
-const VIZ_REFERENCE = `## Visualization API
+const VIZ_REFERENCE = `## Two Visualization Tools
 
-The update_visualization tool accepts Canvas 2D JavaScript code that will be called every animation frame.
-Your code is the BODY of a function with these parameters:
-- ctx: CanvasRenderingContext2D (the drawing context)
-- width: number (canvas width in pixels)
-- height: number (canvas height in pixels)
-- events: array of active sound events from Strudel, each with:
-  - s: string (sound name, e.g. "bd", "sd", "hh")
-  - gain: number (0-1)
-  - duration: number (seconds)
-  - triggeredAt: number (performance.now() timestamp)
-  - cutoff, delay, room, pan, speed, note: optional number parameters
-- time: number (current performance.now() in ms)
+You have TWO visualization tools. Use the appropriate one based on what the user asks for:
 
-The canvas is cleared to #0a0a0f before each call. You do NOT need to clear it.
+### 1. update_visualization — Canvas 2D (event-driven)
+Draws based on Strudel's triggered sound events. Best for: drum visualizers, lane displays, waveform animations.
 
-### Tips
-- Use \`time\` for animation (e.g. Math.sin(time * 0.001))
-- Use \`events\` to react to music (each event has age = time - ev.triggeredAt)
-- Events expire after 3 seconds
-- Common pattern: iterate events, calculate age/decay, draw shapes
+Your code is the BODY of a function with params: ctx, width, height, events, time.
+- events: array of {s, gain, duration, triggeredAt, cutoff, delay, room, pan, speed, note}
+- Canvas pre-cleared to #0a0a0f each frame.
 
-### Example: Sine waves
-\`\`\`
-const centerY = height / 2;
-ctx.strokeStyle = '#00ff41';
-ctx.lineWidth = 2;
-ctx.beginPath();
-for (let x = 0; x < width; x++) {
-  const amp = events.reduce((sum, ev) => {
-    const age = (time - ev.triggeredAt) / 1000;
-    return sum + ev.gain * Math.max(0, 1 - age);
-  }, 0);
-  const y = centerY + Math.sin(x * 0.02 + time * 0.003) * amp * 50;
-  x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-}
-ctx.stroke();
-\`\`\`
-
-### Example: Circles on trigger
+Example:
 \`\`\`
 for (const ev of events) {
   const age = (time - ev.triggeredAt) / 1000;
   const decay = Math.max(0, 1 - age);
-  const radius = age * 200;
   ctx.globalAlpha = decay * ev.gain * 0.5;
-  ctx.strokeStyle = ev.s === 'bd' ? '#ff3333' : ev.s === 'sd' ? '#00d4ff' : '#ffcc00';
-  ctx.lineWidth = 2;
+  ctx.fillStyle = ev.s.includes('Kick') ? '#ff3333' : '#00d4ff';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.arc(width/2, height/2, age * 200, 0, Math.PI * 2);
+  ctx.fill();
 }
 ctx.globalAlpha = 1;
 \`\`\`
+
+### 2. update_hydra — Hydra GPU shaders (audio-reactive)
+Renders GPU shader visuals driven by real-time audio analysis. Best for: ambient visuals, beat-reactive effects, psychedelic patterns, mood-based visuals.
+
+Your code is Hydra shader code with access to: osc, shape, gradient, noise, voronoi, src, solid, render, s0-s3, o0-o3.
+Use \`window.audio\` for audio reactivity — always via arrow functions:
+- \`window.audio.rmsPeak\` — amplitude spikes (instant jump, exponential decay)
+- \`window.audio.beat\` — beat pulse (1.0 on beat, decays ~80ms)
+- \`window.audio.rmsSmooth\` — smoothed volume (fast attack, slow release)
+- \`window.audio.energyPeak\` / \`window.audio.energySmooth\` — energy variants
+- \`window.audio.spectral\` — spectral centroid (brightness)
+
+Code MUST end with \`.out()\`.
+
+Example:
+\`\`\`
+osc(10, 0.1, () => window.audio.rmsPeak * 4)
+  .color(0.9, 0.2, () => window.audio.spectral / 800)
+  .rotate(() => window.audio.energySmooth * 0.5)
+  .scale(() => 1 + window.audio.beat * 0.5)
+  .brightness(() => window.audio.beat * 0.2)
+  .out()
+\`\`\`
+
+### When to use which:
+- User asks for "visualization" generically → use update_hydra (more visually impressive)
+- User asks for event/trigger-based display → use update_visualization
+- User asks for Hydra/shader/GPU visuals → use update_hydra
+- User asks for something that reacts to individual drum hits → use update_visualization
+- User asks for ambient/psychedelic/audio-reactive → use update_hydra
 `;
 
 export function buildSystemMessages(context: PromptContext) {

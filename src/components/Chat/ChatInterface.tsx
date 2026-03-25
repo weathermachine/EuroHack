@@ -100,6 +100,18 @@ export default function ChatInterface() {
           }
           break;
         }
+        case 'update_hydra': {
+          const code = tool.input.code as string;
+          if (code) {
+            const vizState = useVizStore.getState();
+            // Switch to Hydra mode and apply the custom shader
+            if (vizState.vizMode !== 'hydra') {
+              vizState.setVizMode('hydra');
+            }
+            vizState.setCustomHydra(code);
+          }
+          break;
+        }
         case 'explain_music': {
           const explanation = tool.input.explanation as string;
           if (explanation) {
@@ -150,6 +162,8 @@ export default function ChatInterface() {
       };
       addMessage(assistantMsg);
 
+      let receivedContent = false;
+
       sendChatMessage(
         {
           message: text,
@@ -162,14 +176,23 @@ export default function ChatInterface() {
         },
         {
           onText: (chunk) => {
+            receivedContent = true;
             appendToLastMessage(chunk);
           },
-          onToolCall: handleToolCall,
+          onToolCall: (tool) => {
+            receivedContent = true;
+            handleToolCall(tool);
+          },
           onError: (error) => {
-            appendToLastMessage(`\n[Error: ${error}]`);
+            receivedContent = true;
+            appendToLastMessage(`\n⚠️ ${error}`);
             completeStream();
           },
           onDone: () => {
+            // If Claude finished without sending any content, show a helpful message
+            if (!receivedContent) {
+              appendToLastMessage('⚠️ No response received. Try rephrasing your request or being more specific.');
+            }
             completeStream();
           },
         },
