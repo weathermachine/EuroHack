@@ -91,8 +91,6 @@ export const StrudelRepl: React.FC = () => {
   // EditorState cache for tab switching (preserves undo/redo per tab)
   const tabStatesRef = useRef<Map<string, EditorState>>(new Map());
   const prevActiveTabIdRef = useRef<string>(activeTabId);
-  // Guard to suppress store→editor sync during tab switch
-  const switchingTabRef = useRef(false);
   // Stable extensions ref (built once)
   const extensionsRef = useRef<Extension[] | null>(null);
 
@@ -197,13 +195,14 @@ export const StrudelRepl: React.FC = () => {
     const view = viewRef.current;
     if (!view || activeTabId === prevActiveTabIdRef.current) return;
 
-    // Suppress store→editor sync during switch
-    switchingTabRef.current = true;
-
     // Save current tab's EditorState
     tabStatesRef.current.set(prevActiveTabIdRef.current, view.state);
 
     // Restore or create target tab's state
+    // Wrap in updatingFromStore to suppress the updateListener from writing
+    // the new tab's code back to the store (it's already correct there)
+    updatingFromStore.current = true;
+
     const cachedState = tabStatesRef.current.get(activeTabId);
     if (cachedState) {
       view.setState(cachedState);
@@ -219,20 +218,30 @@ export const StrudelRepl: React.FC = () => {
       view.setState(newState);
     }
 
+    updatingFromStore.current = false;
     prevActiveTabIdRef.current = activeTabId;
-
-    // Re-enable sync after a tick (let React settle)
-    requestAnimationFrame(() => { switchingTabRef.current = false; });
   }, [activeTabId]);
 
   // --- Sync store → editor (for AI updates to active tab) ---
+  // Track the tab ID so we can distinguish "code changed because a different
+  // tab became active" from "code changed within the same tab" (e.g. AI update).
+  // Only the latter should push content into the editor — tab switches are
+  // handled by the tab switch effect above.
 
   useEffect(() => {
+    let lastSeenTabId = usePatternStore.getState().activeTabId;
+
     const unsub = usePatternStore.subscribe(
       selectActiveCode,
       (code) => {
-        // Don't sync during tab switch — the tab switch effect handles it
-        if (switchingTabRef.current) return;
+        const currentTabId = usePatternStore.getState().activeTabId;
+
+        // selectActiveCode changed because a different tab is now active —
+        // the tab switch useEffect handles loading that tab's EditorState.
+        if (currentTabId !== lastSeenTabId) {
+          lastSeenTabId = currentTabId;
+          return;
+        }
 
         const view = viewRef.current;
         if (!view) return;
