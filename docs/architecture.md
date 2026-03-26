@@ -183,7 +183,7 @@ ai-rack/
 
 **`MixBar`** — Horizontal strip below the editor showing all tabs with toggle switches. Armed tabs' code is concatenated and evaluated together on Ctrl+Enter. Active tab is auto-armed; switching away auto-disarms unless explicitly toggled.
 
-**`StatusBar`** — Reads from `patternStore` (BPM, playing state) and `audioStore` (CPU usage). Beat-reactive scale animation on BPM display via Framer Motion.
+**`StatusBar`** — Reads from `patternStore` (BPM, playing state) and `audioStore` (CPU usage). BPM display is clickable — opens an inline input to set tempo (20–400). Beat-reactive scale animation on BPM display via Framer Motion.
 
 ---
 
@@ -208,6 +208,7 @@ interface PatternStore {
   activeTabId: string;             // Currently focused tab
   isPlaying: boolean;
   cps: number;                     // Cycles per second
+  bpm: number;                     // Beats per minute (derived from cps)
   cyclePosition: number;
   lastError: string | null;
   lastWorkingCode: string;         // Fallback for error recovery
@@ -230,6 +231,7 @@ interface PatternStore {
   // Backward-compat
   setCode: (code: string) => void;  // Targets active tab
   evaluate: (code: string) => void;
+  setBpm: (bpm: number) => void;
   play: () => void;
   stop: () => void;
 }
@@ -308,7 +310,7 @@ interface VizStore {
 ### Data Flow Between Stores
 
 - **User types in chat** → `chatStore.sendMessage()` → SSE to backend → tool_use `update_pattern` → `patternStore.setCode()` writes to active tab → REPL reflects change → auto-evaluate triggers `patternStore.evaluate()`
-- **User edits code** → `patternStore.setCode()` → on `Cmd+Enter`, `patternStore.evaluate()` → Strudel scheduler picks up new pattern
+- **User edits code** → `patternStore.setCode()` → on `Cmd+Enter`, `buildCombinedCode()` + prepend `setcpm(bpm/4)` → `patternStore.evaluate()` → Strudel scheduler picks up new pattern
 - **Multi-tab eval:** Ctrl+Enter → sync editor → `buildCombinedCode()` collects all armed tabs → single `evaluate()` call
 - **Audio plays** → AnalyserNode feeds `audioStore.update()` every animation frame → `AudioReactiveProvider` writes CSS vars → components re-render or CSS transitions handle the rest
 

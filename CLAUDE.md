@@ -64,9 +64,13 @@ Horizontal strip below the REPL editor showing all tabs with toggle switches. Ar
 
 All confirm dialogs use a React overlay (`ConfirmDialog`) instead of `window.confirm()`, which would block the JS event loop and stop Web Audio playback. The Ctrl+W keyboard shortcut dispatches a `ai-rack:close-tab` custom DOM event that the REPL component listens for and routes through the same non-blocking flow.
 
+### BPM Control
+
+The BPM display in the status bar is clickable — click to type a new BPM (20–400). Stored in `patternStore.bpm` (default 120), kept in sync with `cps` via `setBpm()`/`setCps()`. On every evaluation (Ctrl+Enter, AI updates, code injection), `setcpm(bpm/4)` is automatically prepended to the code so users don't need to write it in the REPL. The injection happens in `StrudelRepl.handleEvaluate()` and both ChatInterface evaluation paths.
+
 ### Stores (Zustand)
 
-- `patternStore` — multi-tab code editor state (`tabs: Tab[]`, `activeTabId`), playback state, error recovery, mix state (`explicitlyArmedIds`, `isArmed` per tab, `buildCombinedCode()`). `setCode()` is backward-compat wrapper targeting active tab. File handles stored per tab for re-saving.
+- `patternStore` — multi-tab code editor state (`tabs: Tab[]`, `activeTabId`), playback state (`bpm`, `cps`, `isPlaying`), error recovery, mix state (`explicitlyArmedIds`, `isArmed` per tab, `buildCombinedCode()`). `setCode()` is backward-compat wrapper targeting active tab. File handles stored per tab for re-saving. `setBpm()` and `setCps()` keep BPM and CPS in sync.
 - `chatStore` — message history, SSE streaming state
 - `audioStore` — FFT, RMS, spectral centroid, beat detection flags
 - `uiStore` — panel focus, CRT toggle, fullscreen

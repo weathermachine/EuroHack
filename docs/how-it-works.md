@@ -205,6 +205,7 @@ graph LR
         CPS[cps: number]
         ERROR[lastError: string]
         LWC[lastWorkingCode: string]
+        BPM[bpm: number]
         ARMED[explicitlyArmedIds: string array]
     end
 
@@ -241,8 +242,9 @@ graph LR
 ```mermaid
 flowchart TD
     USER_EDIT[User edits code] --> PS_CODE[patternStore.setCode → active tab]
-    CMD_ENTER[User presses Cmd+Enter] --> BUILD_COMBINED["buildCombinedCode()"]
+    CMD_ENTER[User presses Cmd+Enter] --> BUILD_COMBINED["buildCombinedCode()<br/>+ prepend setcpm(bpm/4)"]
     BUILD_COMBINED --> EVAL[engine.evaluateCode]
+    BUILD_COMBINED -.- BPM_NOTE["prepends setcpm(bpm/4)"]
     EVAL -->|success| PS_LWC[patternStore.setLastWorkingCode]
     EVAL -->|success| PS_PLAY[patternStore.setPlaying true]
     EVAL -->|error| PS_ERR[patternStore.setError]

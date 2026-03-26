@@ -398,7 +398,7 @@
 
   <div class="card">
     <h4>REPL Panel</h4>
-    <p>Write Strudel code in the editor. Press <code>Cmd+Enter</code> (or <code>Ctrl+Enter</code>) to evaluate. Music hot-swaps in under 50ms &mdash; no restarts, no gaps.</p>
+    <p>Write Strudel code in the editor. Press <code>Cmd+Enter</code> (or <code>Ctrl+Enter</code>) to evaluate. Music hot-swaps in under 50ms &mdash; no restarts, no gaps. Click the BPM display in the status bar to set tempo without writing <code>setcpm()</code> in your code.</p>
   </div>
 
   <div class="card">
@@ -513,7 +513,7 @@
 │ <span class="comp">StrudelRepl</span>          │         │ <span class="comp">Claude API Proxy</span>      │
 │ <span class="comp">HydraCanvas</span> (2 modes)│  <span class="arrow">SSE</span>   │ <span class="comp">Music Engine</span>          │
 │ <span class="comp">ChatInterface</span>        │<span class="arrow">◄──────►</span>│  ├ <span class="comp">MusicTheory</span>        │
-│ <span class="comp">StatusBar</span>            │        │  ├ <span class="comp">PatternGenerator</span>   │
+│ <span class="comp">StatusBar</span> (BPM clickable, transport, timer) │        │  ├ <span class="comp">PatternGenerator</span>   │
 │                      │        │  └ <span class="comp">Transforms</span>         │
 │ <span class="comp">Zustand Stores</span>       │        │ <span class="comp">Knowledge Base</span> (10 md)│
 │  ├ <span class="comp">patternStore</span> (tabs, code per tab) │        │ <span class="comp">Engine REST API</span>       │

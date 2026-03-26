@@ -197,7 +197,7 @@ Fixed single row at bottom. Segments separated by `│` character.
 ♩ 120 BPM │ C min │ d4 "bd sd hh sd" │ ▶ playing │ CPU 12% │ 00:42
 ```
 
-- **BPM**: Pulses on beat; editable (click to type, scroll to adjust)
+- **BPM**: Pulses on beat. Click to open inline input (20–400). Value is auto-injected as `setcpm(bpm/4)` on every evaluation — no need to write tempo in REPL code. Enter confirms, Escape cancels.
 - **Key/Scale**: Dropdown on click
 - **Current pattern**: Truncated preview of active code, scrolls if long
 - **Transport**: Play/Stop state with icon
