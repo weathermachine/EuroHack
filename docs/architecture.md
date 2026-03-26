@@ -77,6 +77,8 @@ ai-rack/
 │   │   │   ├── activeHighlight.ts    # Live note/beat green flash via hap.context.locations
 │   │   │   ├── TabBar.tsx           # Multi-tab bar (rename, close, add)
 │   │   │   ├── TabBar.module.css    # Tab bar styles
+│   │   │   ├── MixBar.tsx           # Mix bar for multi-tab concurrent playback
+│   │   │   ├── MixBar.module.css    # Mix bar styles
 │   │   │   ├── fileOperations.ts    # File save/load using File System Access API
 │   │   │   └── widgets/
 │   │   │       ├── WaveformWidget.ts     # Inline sample waveform
@@ -98,6 +100,7 @@ ai-rack/
 │   │   ├── SampleBrowser/
 │   │   │   ├── SampleBrowser.tsx     # Browsable tree of local + CDN samples
 │   │   │   └── SampleBrowser.module.css
+│   │   ├── ConfirmDialog.tsx         # Non-blocking confirm dialog (replaces window.confirm)
 │   │   └── StatusBar/
 │   │       └── StatusBar.tsx         # BPM, key, transport, CPU, timer
 │   ├── stores/
@@ -148,7 +151,8 @@ ai-rack/
   <AudioReactiveProvider>          ← Meyda → CSS custom props
     <PanelLayout>                  ← react-resizable-panels (4 panels)
       ├── <StrudelRepl />          ← CodeMirror 6 + tabs + inline widgets
-      │     └── <TabBar />         ← Multi-tab bar (rename, close, add)
+      │     ├── <TabBar />         ← Multi-tab bar (rename, close, add)
+      │     └── <MixBar />         ← Arm/disarm tabs for concurrent playback
       ├── <HydraCanvas />          ← Dual-mode: events canvas OR hydra canvas
       │     └── <VizControls />    ← Shader preset dropdown (hydra mode only)
       ├── <ChatInterface />        ← message list + input
@@ -177,6 +181,8 @@ ai-rack/
 
 **`SampleBrowser`** — Bottom-right panel displaying all local samples and dough-samples CDN packs in a browsable tree. Click any sample to preview it. Loaded from `public/samples/index.json` (local) and the dough-samples CDN manifest.
 
+**`MixBar`** — Horizontal strip below the editor showing all tabs with toggle switches. Armed tabs' code is concatenated and evaluated together on Ctrl+Enter. Active tab is auto-armed; switching away auto-disarms unless explicitly toggled.
+
 **`StatusBar`** — Reads from `patternStore` (BPM, playing state) and `audioStore` (CPU usage). Beat-reactive scale animation on BPM display via Framer Motion.
 
 ---
@@ -193,6 +199,7 @@ interface Tab {
   name: string;
   code: string;
   isDirty: boolean;
+  isArmed: boolean;
   fileHandle?: FileSystemFileHandle | null;
 }
 
@@ -214,6 +221,11 @@ interface PatternStore {
   setTabDirty: (id: string, dirty: boolean) => void;
   setTabFileHandle: (id: string, handle: FileSystemFileHandle) => void;
   getActiveTab: () => Tab | undefined;
+
+  // Mix (concurrent playback)
+  explicitlyArmedIds: string[];
+  toggleArmed: (tabId: string) => void;
+  buildCombinedCode: () => string;
 
   // Backward-compat
   setCode: (code: string) => void;  // Targets active tab
@@ -297,6 +309,7 @@ interface VizStore {
 
 - **User types in chat** → `chatStore.sendMessage()` → SSE to backend → tool_use `update_pattern` → `patternStore.setCode()` writes to active tab → REPL reflects change → auto-evaluate triggers `patternStore.evaluate()`
 - **User edits code** → `patternStore.setCode()` → on `Cmd+Enter`, `patternStore.evaluate()` → Strudel scheduler picks up new pattern
+- **Multi-tab eval:** Ctrl+Enter → sync editor → `buildCombinedCode()` collects all armed tabs → single `evaluate()` call
 - **Audio plays** → AnalyserNode feeds `audioStore.update()` every animation frame → `AudioReactiveProvider` writes CSS vars → components re-render or CSS transitions handle the rest
 
 ---

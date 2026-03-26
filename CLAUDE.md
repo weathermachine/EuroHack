@@ -46,12 +46,27 @@ Multi-tab code editor with per-tab undo history. One `EditorView`, swaps `Editor
 - **Ctrl+S** — Save active tab (reuses file handle)
 - **Ctrl+Shift+S** — Save As (new file)
 - **Ctrl+O** — Open file into new tab
-- **Ctrl+W** — Close tab (confirms if dirty)
+- **Ctrl+W** — Close tab (non-blocking confirm if dirty)
 - **Ctrl+Tab / Ctrl+Shift+Tab** — Cycle tabs
+
+### MixBar — Multi-Tab Concurrent Playback (src/components/Repl/MixBar.tsx)
+
+Horizontal strip below the REPL editor showing all tabs with toggle switches. Armed tabs' code is concatenated and evaluated together on Ctrl+Enter, enabling DJ-style mixing between tabs. Each tab's `isArmed` flag and `explicitlyArmedIds` list in `patternStore` control the mix.
+
+- **Active tab** is always auto-armed when switched to; auto-disarms on switch-away unless explicitly toggled
+- **Single armed tab** → evaluated as-is (backward compat)
+- **Multiple armed tabs** → concatenated with `// ── TabName ──` comment separators into a single `evaluate()` call
+- **Variable collisions** (e.g. `let chords` in both tabs) produce a clear error — rename one to fix
+- **AI evaluations** (`update_pattern`, code injection) also respect the mix via `buildCombinedCode()`
+- Strudel's `$:` label syntax must remain at top level — code is NOT wrapped in blocks
+
+### Non-Blocking Dialogs (src/components/ConfirmDialog.tsx)
+
+All confirm dialogs use a React overlay (`ConfirmDialog`) instead of `window.confirm()`, which would block the JS event loop and stop Web Audio playback. The Ctrl+W keyboard shortcut dispatches a `ai-rack:close-tab` custom DOM event that the REPL component listens for and routes through the same non-blocking flow.
 
 ### Stores (Zustand)
 
-- `patternStore` — multi-tab code editor state (`tabs: Tab[]`, `activeTabId`), playback state, error recovery. `setCode()` is backward-compat wrapper targeting active tab. File handles stored per tab for re-saving.
+- `patternStore` — multi-tab code editor state (`tabs: Tab[]`, `activeTabId`), playback state, error recovery, mix state (`explicitlyArmedIds`, `isArmed` per tab, `buildCombinedCode()`). `setCode()` is backward-compat wrapper targeting active tab. File handles stored per tab for re-saving.
 - `chatStore` — message history, SSE streaming state
 - `audioStore` — FFT, RMS, spectral centroid, beat detection flags
 - `uiStore` — panel focus, CRT toggle, fullscreen

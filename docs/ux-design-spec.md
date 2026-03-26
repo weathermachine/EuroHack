@@ -266,7 +266,7 @@ Fixed single row at bottom. Segments separated by `│` character.
 | `Ctrl+S`             | Save active tab to file                 |
 | `Ctrl+Shift+S`       | Save As (new file)                      |
 | `Ctrl+O`             | Open file into new tab                  |
-| `Ctrl+W`             | Close active tab                        |
+| `Ctrl+W`             | Close active tab (non-blocking confirm if dirty) |
 | `Ctrl+Tab`           | Next tab                                |
 | `Ctrl+Shift+Tab`     | Previous tab                            |
 | `Cmd/Ctrl+L`         | Clear chat                              |

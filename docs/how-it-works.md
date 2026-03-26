@@ -156,6 +156,7 @@ graph TD
     PL --> CI["ChatInterface<br/>Message list + input"]
     PL --> SBR["SampleBrowser<br/>Sample tree + preview"]
 
+    SR --> MB["MixBar<br/>Arm/disarm tabs for mix"]
     SR --> TB["TabBar<br/>Multi-tab bar"]
     SR --> US["useStrudel hook<br/>evaluate on Cmd+Enter"]
 
@@ -193,6 +194,8 @@ The app uses `react-resizable-panels` for a 3-panel layout:
 
 All state flows through 5 Zustand stores. Stores are accessible from both React components and imperative code (audio callbacks).
 
+The `patternStore` also tracks mix state: each tab has `isArmed: boolean`, and `explicitlyArmedIds` tracks manually toggled tabs. `buildCombinedCode()` concatenates all armed tabs' code for evaluation.
+
 ```mermaid
 graph LR
     subgraph patternStore
@@ -202,6 +205,7 @@ graph LR
         CPS[cps: number]
         ERROR[lastError: string]
         LWC[lastWorkingCode: string]
+        ARMED[explicitlyArmedIds: string array]
     end
 
     subgraph chatStore
@@ -237,7 +241,8 @@ graph LR
 ```mermaid
 flowchart TD
     USER_EDIT[User edits code] --> PS_CODE[patternStore.setCode → active tab]
-    CMD_ENTER[User presses Cmd+Enter] --> EVAL[engine.evaluateCode]
+    CMD_ENTER[User presses Cmd+Enter] --> BUILD_COMBINED["buildCombinedCode()"]
+    BUILD_COMBINED --> EVAL[engine.evaluateCode]
     EVAL -->|success| PS_LWC[patternStore.setLastWorkingCode]
     EVAL -->|success| PS_PLAY[patternStore.setPlaying true]
     EVAL -->|error| PS_ERR[patternStore.setError]
