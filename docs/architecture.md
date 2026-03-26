@@ -12,7 +12,7 @@
 | **Visuals** | `hydra-synth` | GPU shader visuals, native Strudel integration via `initHydra()` |
 | **Audio Analysis** | Meyda + Web Audio AnalyserNode | RMS, spectral centroid, beat detection → CSS custom properties |
 | **State Management** | Zustand | Minimal boilerplate, works outside React tree (audio callbacks) |
-| **Layout** | `react-resizable-panels` | Draggable 3-panel layout |
+| **Layout** | `react-resizable-panels` | Draggable 4-panel layout (Code, Viz, Chat, Samples) |
 | **Animation** | Framer Motion | Spring physics for beat-reactive UI elements |
 | **Chat List** | React Virtuoso | Virtualized message list with auto-scroll |
 | **AI Backend** | Express + Anthropic SDK | Claude API proxy with SSE streaming |
@@ -57,7 +57,8 @@ ai-rack/
 │   │   ├── loader.ts          # Knowledge file loader
 │   │   ├── 01-role.md … 10-mcp-tools.md  # Domain expertise files
 │   │   ├── 11-advanced-techniques.md      # Advanced Strudel patterns
-│   │   └── 12-templates.md               # Auto-generated from templates/*.js
+│   │   ├── 12-templates.md               # Auto-generated from templates/*.js
+│   │   └── 13-canvas-visualizations.md   # Demoscene-style Canvas 2D examples
 │   ├── prompts/
 │   │   ├── system.ts         # System prompt builder
 │   │   └── strudel-ref.ts    # Strudel reference (cached)
@@ -68,12 +69,15 @@ ai-rack/
 │   ├── App.tsx               # Root: layout + providers
 │   ├── components/
 │   │   ├── Layout/
-│   │   │   └── PanelLayout.tsx       # 3-panel resizable shell
+│   │   │   └── PanelLayout.tsx       # 4-panel resizable shell
 │   │   ├── Repl/
 │   │   │   ├── StrudelRepl.tsx       # CodeMirror + eval
 │   │   │   ├── useStrudel.ts         # Strudel lifecycle hook
 │   │   │   ├── strudelHighlight.ts   # CM syntax highlighting
 │   │   │   ├── activeHighlight.ts    # Live note/beat green flash via hap.context.locations
+│   │   │   ├── TabBar.tsx           # Multi-tab bar (rename, close, add)
+│   │   │   ├── TabBar.module.css    # Tab bar styles
+│   │   │   ├── fileOperations.ts    # File save/load using File System Access API
 │   │   │   └── widgets/
 │   │   │       ├── WaveformWidget.ts     # Inline sample waveform
 │   │   │       ├── PatternGrid.ts        # Step-sequencer dots
@@ -97,7 +101,7 @@ ai-rack/
 │   │   └── StatusBar/
 │   │       └── StatusBar.tsx         # BPM, key, transport, CPU, timer
 │   ├── stores/
-│   │   ├── patternStore.ts   # Current code, pattern ref, playback state
+│   │   ├── patternStore.ts   # Multi-tab code editor state, playback, error recovery
 │   │   ├── chatStore.ts      # Message history, streaming state
 │   │   ├── audioStore.ts     # FFT data, RMS, beat flags
 │   │   ├── uiStore.ts        # Panel focus, CRT toggle, fullscreen
@@ -142,13 +146,14 @@ ai-rack/
 ```
 <App>
   <AudioReactiveProvider>          ← Meyda → CSS custom props
-    <PanelLayout>                  ← react-resizable-panels
-      ├── <StrudelRepl />          ← CodeMirror 6 + inline widgets
+    <PanelLayout>                  ← react-resizable-panels (4 panels)
+      ├── <StrudelRepl />          ← CodeMirror 6 + tabs + inline widgets
+      │     └── <TabBar />         ← Multi-tab bar (rename, close, add)
       ├── <HydraCanvas />          ← Dual-mode: events canvas OR hydra canvas
       │     └── <VizControls />    ← Shader preset dropdown (hydra mode only)
-      └── <ChatInterface />        ← message list + input
+      ├── <ChatInterface />        ← message list + input
+      └── <SampleBrowser />        ← browsable sample tree with preview
     </PanelLayout>
-    <SampleBrowser />              ← bottom-right, browsable sample tree
     <StatusBar />                  ← fixed bottom row
   </AudioReactiveProvider>
 </App>
@@ -160,7 +165,7 @@ ai-rack/
 
 **`AudioReactiveProvider`** — Subscribes to `audioStore`, runs `requestAnimationFrame` loop that writes `--beat-intensity`, `--rms`, `--spectral-centroid` as CSS custom properties on `<html>`. All beat-reactive CSS reads these vars.
 
-**`StrudelRepl`** — Hosts CodeMirror 6 editor. On `Cmd+Enter`, evaluates code through `audio/engine.ts`. Registers CM `ViewPlugin` decorations that render inline viz widgets (waveforms, pattern grids, ADSR) as canvas elements positioned via CM's coordinate system.
+**`StrudelRepl`** — Hosts CodeMirror 6 editor with multi-tab support (per-tab undo history, file save/load via Ctrl+S/Ctrl+O using the File System Access API). On `Cmd+Enter`, evaluates code through `audio/engine.ts`. Registers CM `ViewPlugin` decorations that render inline viz widgets (waveforms, pattern grids, ADSR) as canvas elements positioned via CM's coordinate system.
 
 **`HydraCanvas`** — Dual-mode visualization panel controlled by `vizStore.vizMode`:
 - **Events mode** (`'events'`): Canvas 2D rendering of live Strudel events (notes, samples) as they trigger. Supports custom draw functions via `vizStore.setCustomDraw()`.
@@ -183,20 +188,38 @@ Zustand stores, subscribed to from both React components and imperative audio co
 ### `patternStore`
 
 ```typescript
+interface Tab {
+  id: string;
+  name: string;
+  code: string;
+  isDirty: boolean;
+  fileHandle?: FileSystemFileHandle | null;
+}
+
 interface PatternStore {
-  code: string;                    // Current editor content
-  patternRef: Pattern | null;      // Live Strudel pattern reference
+  tabs: Tab[];                     // All open tabs
+  activeTabId: string;             // Currently focused tab
   isPlaying: boolean;
-  cps: number;                     // Cycles per second (BPM / 60 / beatsPerCycle)
-  cyclePosition: number;           // Current position in cycle
+  cps: number;                     // Cycles per second
+  cyclePosition: number;
   lastError: string | null;
   lastWorkingCode: string;         // Fallback for error recovery
 
-  setCode: (code: string) => void;
+  // Tab operations
+  addTab: (name?: string, code?: string) => string;
+  removeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  setTabCode: (id: string, code: string) => void;
+  setTabName: (id: string, name: string) => void;
+  setTabDirty: (id: string, dirty: boolean) => void;
+  setTabFileHandle: (id: string, handle: FileSystemFileHandle) => void;
+  getActiveTab: () => Tab | undefined;
+
+  // Backward-compat
+  setCode: (code: string) => void;  // Targets active tab
   evaluate: (code: string) => void;
   play: () => void;
   stop: () => void;
-  setCps: (cps: number) => void;
 }
 ```
 
@@ -254,14 +277,17 @@ interface UIStore {
 
 ```typescript
 interface VizStore {
-  customDrawCode: string | null;       // Custom Canvas 2D draw function code
-  drawFn: Function | null;             // Compiled draw function
-  error: string | null;                // Last compilation error
-  vizMode: 'events' | 'hydra';        // Current visualization mode
-  selectedShader: string;              // Active Hydra shader preset ID
+  customDrawCode: string | null;
+  customHydraCode: string | null;    // AI-generated Hydra code
+  drawFn: Function | null;
+  error: string | null;
+  vizMode: 'events' | 'hydra';
+  selectedShader: string;
 
   setCustomDraw: (code: string) => void;
   clearCustomDraw: () => void;
+  setCustomHydra: (code: string) => void;
+  clearCustomHydra: () => void;
   setVizMode: (mode: 'events' | 'hydra') => void;
   setSelectedShader: (id: string) => void;
 }
@@ -269,7 +295,7 @@ interface VizStore {
 
 ### Data Flow Between Stores
 
-- **User types in chat** → `chatStore.sendMessage()` → SSE request to backend → streamed response updates `chatStore.streamBuffer` → on tool call `update_pattern`, writes new code to `patternStore.code` → REPL reflects change → auto-evaluate triggers `patternStore.evaluate()`
+- **User types in chat** → `chatStore.sendMessage()` → SSE to backend → tool_use `update_pattern` → `patternStore.setCode()` writes to active tab → REPL reflects change → auto-evaluate triggers `patternStore.evaluate()`
 - **User edits code** → `patternStore.setCode()` → on `Cmd+Enter`, `patternStore.evaluate()` → Strudel scheduler picks up new pattern
 - **Audio plays** → AnalyserNode feeds `audioStore.update()` every animation frame → `AudioReactiveProvider` writes CSS vars → components re-render or CSS transitions handle the rest
 
@@ -390,7 +416,7 @@ Generated patterns can use local samples (Kicks, Snares, ClosedHats, etc.), doug
                          │            FRONTEND EVENT PARSER                  │
                          │                                                   │
                          │  event: text ─────────► chatStore (streaming)     │
-                         │  event: tool_use ──┬──► patternStore (code swap)  │
+                         │  event: tool_use ──┬──► patternStore (tabs, activeTabId, code per tab)  │
                          │                    └──► hydra eval (viz update)   │
                          └───────────────────────────────────────────────────┘
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-AI Rack (EuroHack) — an AI-powered live coding music environment combining Strudel (music patterns), Hydra (GPU visuals), and Claude (AI chat assistant) in a 3-panel React app. Licensed AGPL-3.0 (required by Strudel).
+AI Rack (EuroHack) — an AI-powered live coding music environment combining Strudel (music patterns), Hydra (GPU visuals), and Claude (AI chat assistant) in a 4-panel React app. Licensed AGPL-3.0 (required by Strudel).
 
 ## Commands
 
@@ -37,7 +37,17 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 - **Chat → Audio:** User message → `chatStore` → SSE to backend → Claude responds with `update_pattern` tool call → `patternStore.evaluate()` → Strudel scheduler picks up new pattern within ~50ms (hot-swap via atomic reference replacement).
 - **Chat → Viz:** Claude can send `update_visualization` (Canvas 2D events) or `update_hydra` (GPU shader) to create/modify visuals. Both auto-switch the viz panel to the appropriate mode.
 - **Audio → UI:** Strudel → Web Audio → AnalyserNode → Meyda feature extraction → `audioStore` → CSS custom properties (`--beat-intensity`, `--rms`) → beat-reactive UI.
-- **Code → Audio:** CodeMirror edit → Cmd+Enter → `patternStore.evaluate()` → Strudel transpiles + schedules.
+- **Code → Audio:** CodeMirror edit → Ctrl+Enter → `patternStore.evaluate()` → Strudel transpiles + schedules.
+
+### Tabbed REPL (src/components/Repl/)
+
+Multi-tab code editor with per-tab undo history. One `EditorView`, swaps `EditorState` on tab switch (cached in a `Map<string, EditorState>` ref). Handler refs pattern keeps CodeMirror extensions stable across re-renders. File save/load via File System Access API (`fileOperations.ts`) with download/upload fallback.
+
+- **Ctrl+S** — Save active tab (reuses file handle)
+- **Ctrl+Shift+S** — Save As (new file)
+- **Ctrl+O** — Open file into new tab
+- **Ctrl+W** — Close tab (confirms if dirty)
+- **Ctrl+Tab / Ctrl+Shift+Tab** — Cycle tabs
 
 ### Stores (Zustand)
 

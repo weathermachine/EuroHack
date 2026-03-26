@@ -152,7 +152,7 @@
   /* ── Panels ── */
   .panels {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin: 1.5rem 0;
   }
@@ -181,6 +181,7 @@
   .panel:nth-child(1) h4 { color: var(--green); }
   .panel:nth-child(2) h4 { color: var(--magenta); }
   .panel:nth-child(3) h4 { color: var(--cyan); }
+  .panel:nth-child(4) h4 { color: var(--amber); }
 
   /* ── Code blocks ── */
   code {
@@ -349,7 +350,7 @@
     <div class="panel">
       <span class="panel-icon">&gt;_</span>
       <h4>Code REPL</h4>
-      <p>Live music coding with Strudel, the JavaScript port of TidalCycles. Write patterns, hit Cmd+Enter, hear them instantly.</p>
+      <p>Live music coding with Strudel in a multi-tab editor. Write patterns, hit Ctrl+Enter, hear them instantly. Save and load tabs as files.</p>
     </div>
     <div class="panel">
       <span class="panel-icon">&#9670;</span>
@@ -360,6 +361,11 @@
       <span class="panel-icon">&#9883;</span>
       <h4>AI Chat</h4>
       <p>An AI collaborator that generates, transforms, and evolves musical patterns. Ask it to change mood, genre, or energy.</p>
+    </div>
+    <div class="panel">
+      <span class="panel-icon">&#9835;</span>
+      <h4>Sample Browser</h4>
+      <p>Browse and preview all local samples and CDN packs in a tree view. Click any sample to audition it instantly.</p>
     </div>
   </div>
 </section>
@@ -407,6 +413,23 @@
       <li><strong>Events</strong> &mdash; Canvas 2D lane visualization driven by Strudel's <code>.onTrigger</code> events</li>
       <li><strong>Hydra</strong> &mdash; GPU shader presets selectable from a dropdown. Audio-reactive via <code>window.audio</code> globals.</li>
     </ul>
+  </div>
+
+  <div class="card">
+    <h4>Tabbed REPL</h4>
+    <p>Open multiple tabs, each with independent code and undo history. All tabs share the same Strudel audio session, so patterns from different tabs play together.</p>
+    <ul>
+      <li><strong>Ctrl+S</strong> &mdash; Save active tab to file</li>
+      <li><strong>Ctrl+Shift+S</strong> &mdash; Save As (new file)</li>
+      <li><strong>Ctrl+O</strong> &mdash; Open file into new tab</li>
+      <li><strong>Ctrl+W</strong> &mdash; Close active tab</li>
+      <li><strong>Ctrl+Tab</strong> / <strong>Ctrl+Shift+Tab</strong> &mdash; Cycle between tabs</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Sample Browser</h4>
+    <p>The bottom-right panel shows all available samples in a browsable tree. Click any sample to preview it. Samples include local WAV files, dough-samples CDN packs (Dirt-Samples, Tidal Drum Machines, Piano, VCSL, EmuSP12, Mridangam), and built-in synths.</p>
   </div>
 
   <div class="card">
@@ -483,7 +506,7 @@
 │ <span class="comp">StatusBar</span>            │        │  ├ <span class="comp">PatternGenerator</span>   │
 │                      │        │  └ <span class="comp">Transforms</span>         │
 │ <span class="comp">Zustand Stores</span>       │        │ <span class="comp">Knowledge Base</span> (10 md)│
-│  ├ <span class="comp">patternStore</span>      │        │ <span class="comp">Engine REST API</span>       │
+│  ├ <span class="comp">patternStore</span> (tabs, code per tab) │        │ <span class="comp">Engine REST API</span>       │
 │  ├ <span class="comp">chatStore</span>         │        └──────────────────────┘
 │  ├ <span class="comp">audioStore</span>        │
 │  ├ <span class="comp">vizStore</span>          │        <span class="label">Audio Pipeline</span>
@@ -535,10 +558,8 @@
 
   <div class="future-grid">
     <div class="future-item">MIDI controller input/output</div>
-    <div class="future-item">Session save/load with pattern history</div>
     <div class="future-item">Collaborative multi-user sessions</div>
     <div class="future-item">More Hydra shader presets</div>
-    <div class="future-item">Sample browser/audition UI</div>
     <div class="future-item">Waveform editing and slicing</div>
     <div class="future-item">Pattern recording and looping</div>
     <div class="future-item">Export to audio file (WAV/MP3)</div>

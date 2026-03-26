@@ -6,21 +6,24 @@
 
 ```
 ┌─────────────────────────────────┬──────────────────────────────┐
-│                                 │                              │
+│  [Tab1] [Tab2] [+]             │                              │
 │   CODE REPL (Left Panel)        │   VISUALIZATION (Right Panel)│
 │   ~55% width                    │   ~45% width                 │
 │                                 │                              │
-│   - Strudel code editor         │   - Hydra Synth canvas       │
-│   - Inline waveform overlays    │   - GPU shader visuals       │
-│   - Hydra visual commands       │   - Beat-reactive graphics   │
-│   - Pattern visualization       │   - Fullscreen toggle (F11)  │
+│   - Multi-tab Strudel editor    │   - Hydra Synth canvas       │
+│   - Per-tab undo history        │   - GPU shader visuals       │
+│   - File save/load (Ctrl+S/O)  │   - Beat-reactive graphics   │
+│   - Inline waveform overlays    │   - Fullscreen toggle (F11)  │
 │   - Line numbers + gutter       │                              │
-│                                 │                              │
+│                                 ├──────────────────────────────┤
+│                                 │   SAMPLE BROWSER (Bottom-R)  │
+│                                 │   - Browsable sample tree    │
+│                                 │   - Click to preview/audition│
 ├─────────────────────────────────┴──────────────────────────────┤
-│  CHAT PANEL (Bottom)  ~25% height                              │
+│  CHAT PANEL (Bottom-Left)  ~25% height                         │
 │  - Claude AI conversation                                      │
 │  - Streaming text with typing animation                        │
-│  - Command input with prompt cursor                            │
+│  - Voice input via microphone                                  │
 ├────────────────────────────────────────────────────────────────┤
 │  STATUS BAR (Fixed Bottom)  1 row                              │
 │  ♩ 120 BPM │ C minor │ d4 "bd sd hh sd" │ ▶ playing │ CPU 12% │
@@ -260,7 +263,12 @@ Fixed single row at bottom. Segments separated by `│` character.
 | `Cmd/Ctrl+Shift+R`   | Toggle CRT effects                      |
 | `F11`                | Fullscreen visualization                |
 | `Esc`                | Exit fullscreen / close overlays        |
-| `Cmd/Ctrl+S`         | Save session                            |
+| `Ctrl+S`             | Save active tab to file                 |
+| `Ctrl+Shift+S`       | Save As (new file)                      |
+| `Ctrl+O`             | Open file into new tab                  |
+| `Ctrl+W`             | Close active tab                        |
+| `Ctrl+Tab`           | Next tab                                |
+| `Ctrl+Shift+Tab`     | Previous tab                            |
 | `Cmd/Ctrl+L`         | Clear chat                              |
 | `Tab` (in chat)      | Autocomplete command                    |
 | `↑` (in chat)        | Previous message                        |

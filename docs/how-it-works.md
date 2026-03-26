@@ -31,7 +31,7 @@ graph TB
         STATUS[StatusBar<br/>BPM, transport, CPU]
 
         subgraph Stores ["Zustand Stores"]
-            PS[patternStore<br/>code, isPlaying, cps]
+            PS[patternStore<br/>tabs, activeTabId, isPlaying]
             CS[chatStore<br/>messages, streaming]
             AS[audioStore<br/>rms, energy, isBeat]
             VS[vizStore<br/>vizMode, selectedShader]
@@ -57,7 +57,7 @@ graph TB
         end
 
         subgraph Knowledge ["Knowledge Base"]
-            KB["10 markdown files<br/>01-role through 10-mcp-tools"]
+            KB["13 markdown files<br/>01-role through 13-canvas-visualizations"]
             LOADER[loader.ts<br/>Auto-loads all .md]
         end
 
@@ -114,7 +114,7 @@ sequenceDiagram
     App->>App: useAudioReactive() starts RAF loop
 
     Note over Express: Started via "tsx watch server/index.ts"
-    Express->>Express: Load knowledge base (10 .md files)
+    Express->>Express: Load knowledge base (13 .md files)
     Express->>Express: Register /api/chat and /api/engine routes
 
     Note over Browser: User clicks or presses Cmd+Enter
@@ -154,7 +154,9 @@ graph TD
     PL --> SR["StrudelRepl<br/>CodeMirror 6 editor"]
     PL --> HC["HydraCanvas<br/>Dual-mode visualization"]
     PL --> CI["ChatInterface<br/>Message list + input"]
+    PL --> SBR["SampleBrowser<br/>Sample tree + preview"]
 
+    SR --> TB["TabBar<br/>Multi-tab bar"]
     SR --> US["useStrudel hook<br/>evaluate on Cmd+Enter"]
 
     HC --> UH["useHydra hook<br/>Hydra synth instance"]
@@ -183,6 +185,7 @@ The app uses `react-resizable-panels` for a 3-panel layout:
 | Left | `StrudelRepl` | CodeMirror 6 editor for Strudel live coding |
 | Center | `HydraCanvas` | Visualization (Events canvas or Hydra shaders) |
 | Right | `ChatInterface` | AI chat with message history and code injection |
+| Bottom-Right | `SampleBrowser` | Browsable tree of local + CDN samples with click-to-preview |
 
 ---
 
@@ -193,7 +196,8 @@ All state flows through 5 Zustand stores. Stores are accessible from both React 
 ```mermaid
 graph LR
     subgraph patternStore
-        CODE[code: string]
+        TABS[tabs: Tab array]
+        ACTIVE[activeTabId: string]
         PLAYING[isPlaying: boolean]
         CPS[cps: number]
         ERROR[lastError: string]
@@ -218,6 +222,7 @@ graph LR
         VMODE[vizMode: events/hydra]
         SHADER[selectedShader: string]
         DRAWFN[drawFn: compiled function]
+        HYDRA_CODE[customHydraCode: string]
     end
 
     subgraph uiStore
@@ -231,7 +236,7 @@ graph LR
 
 ```mermaid
 flowchart TD
-    USER_EDIT[User edits code] --> PS_CODE[patternStore.setCode]
+    USER_EDIT[User edits code] --> PS_CODE[patternStore.setCode → active tab]
     CMD_ENTER[User presses Cmd+Enter] --> EVAL[engine.evaluateCode]
     EVAL -->|success| PS_LWC[patternStore.setLastWorkingCode]
     EVAL -->|success| PS_PLAY[patternStore.setPlaying true]
@@ -644,6 +649,9 @@ flowchart TD
         F08["08-hydra.md<br/>Hydra visual synthesis"]
         F09["09-shaders.md<br/>Shader recipes"]
         F10["10-mcp-tools.md<br/>Engine tool guide"]
+        F11["11-advanced-techniques.md<br/>Advanced Strudel patterns"]
+        F12["12-templates.md<br/>Auto-generated genre templates"]
+        F13["13-canvas-visualizations.md<br/>Canvas 2D viz examples"]
     end
 
     Files --> LOADER["loader.ts<br/>readdir → filter .md → sort → join"]
@@ -673,6 +681,9 @@ flowchart TD
 │ 08-hydra.md: Visual synthesis guide     │
 │ 09-shaders.md: Shader recipes           │
 │ 10-mcp-tools.md: Engine tools guide     │
+│ 11-advanced-techniques.md: Advanced     │
+│ 12-templates.md: Genre templates        │
+│ 13-canvas-visualizations.md: Canvas 2D  │
 ├─────────────────────────────────────────┤
 │ System Message 2 (dynamic, per-request) │
 │                                         │
@@ -713,7 +724,7 @@ sequenceDiagram
     User->>Chat: "Add a bassline"
     Chat->>Server: POST {message, context: {code, isPlaying, cps}}
     Server->>Server: Build system prompt with current code
-    Server->>Claude: Stream request with 11 tools
+    Server->>Claude: Stream request with 12 tools
 
     Claude->>Claude: Reads current code from context
     Claude->>Claude: Decides to use update_pattern
@@ -869,8 +880,8 @@ mindmap
       SSE streaming
     AI
       Claude Sonnet 4.6
-      10 knowledge files
-      11 tool definitions
+      13 knowledge files
+      12 tool definitions
       Music engine (theory + generation + transforms)
     Desktop
       Electron 33 (optional)
