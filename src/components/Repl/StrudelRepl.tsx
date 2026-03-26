@@ -34,6 +34,45 @@ const darkTheme = EditorView.theme(
   { dark: true },
 );
 
+// Use refs for handlers so CodeMirror keymaps don't need to be recreated
+// when callbacks change. This prevents the cascading re-initialization bug.
+const handlerRefs = {
+  evaluate: null as (() => void) | null,
+  stop: null as (() => void) | null,
+  save: null as (() => void) | null,
+  saveAs: null as (() => void) | null,
+  open: null as (() => void) | null,
+};
+
+// Build extensions ONCE — keymaps dispatch through stable refs
+function buildExtensions(updatingFromStore: React.MutableRefObject<boolean>): Extension[] {
+  const updateListener = EditorView.updateListener.of((update: ViewUpdate) => {
+    if (update.docChanged && !updatingFromStore.current) {
+      const currentTabId = usePatternStore.getState().activeTabId;
+      usePatternStore.getState().setTabCode(currentTabId, update.state.doc.toString());
+    }
+  });
+
+  const evalKeymap = keymap.of([
+    { key: 'Ctrl-Enter', run: () => { handlerRefs.evaluate?.(); return true; } },
+    { key: 'Ctrl-.', run: () => { handlerRefs.stop?.(); return true; } },
+    { key: 'Ctrl-s', run: () => { handlerRefs.save?.(); return true; } },
+    { key: 'Ctrl-Shift-s', run: () => { handlerRefs.saveAs?.(); return true; } },
+    { key: 'Ctrl-o', run: () => { handlerRefs.open?.(); return true; } },
+  ]);
+
+  return [
+    basicSetup,
+    javascript(),
+    strudelHighlight,
+    darkTheme,
+    evalKeymap,
+    updateListener,
+    EditorView.lineWrapping,
+    activeHighlightExtension(),
+  ];
+}
+
 export const StrudelRepl: React.FC = () => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -49,9 +88,13 @@ export const StrudelRepl: React.FC = () => {
   const tabs = usePatternStore((s) => s.tabs);
   const activeTabId = usePatternStore((s) => s.activeTabId);
 
-  // EditorState cache for tab switching
+  // EditorState cache for tab switching (preserves undo/redo per tab)
   const tabStatesRef = useRef<Map<string, EditorState>>(new Map());
   const prevActiveTabIdRef = useRef<string>(activeTabId);
+  // Guard to suppress store→editor sync during tab switch
+  const switchingTabRef = useRef(false);
+  // Stable extensions ref (built once)
+  const extensionsRef = useRef<Extension[] | null>(null);
 
   // --- File operation handlers ---
 
@@ -108,8 +151,6 @@ export const StrudelRepl: React.FC = () => {
     usePatternStore.getState().setTabName(tabId, newName);
   }, []);
 
-  // --- Evaluate ---
-
   const handleEvaluate = useCallback(() => {
     if (!viewRef.current) return;
     const code = viewRef.current.state.doc.toString();
@@ -118,37 +159,14 @@ export const StrudelRepl: React.FC = () => {
     evaluate(code);
   }, [evaluate]);
 
-  // --- Build reusable extensions ---
+  // Keep handler refs up to date (keymaps dispatch through these)
+  handlerRefs.evaluate = handleEvaluate;
+  handlerRefs.stop = stop;
+  handlerRefs.save = handleSave;
+  handlerRefs.saveAs = handleSaveAs;
+  handlerRefs.open = handleOpen;
 
-  const makeExtensions = useCallback((): Extension[] => {
-    const updateListener = EditorView.updateListener.of((update: ViewUpdate) => {
-      if (update.docChanged && !updatingFromStore.current) {
-        const currentTabId = usePatternStore.getState().activeTabId;
-        usePatternStore.getState().setTabCode(currentTabId, update.state.doc.toString());
-      }
-    });
-
-    const evalKeymap = keymap.of([
-      { key: 'Ctrl-Enter', run: () => { handleEvaluate(); return true; } },
-      { key: 'Ctrl-.', run: () => { stop(); return true; } },
-      { key: 'Ctrl-s', run: () => { handleSave(); return true; } },
-      { key: 'Ctrl-Shift-s', run: () => { handleSaveAs(); return true; } },
-      { key: 'Ctrl-o', run: () => { handleOpen(); return true; } },
-    ]);
-
-    return [
-      basicSetup,
-      javascript(),
-      strudelHighlight,
-      darkTheme,
-      evalKeymap,
-      updateListener,
-      EditorView.lineWrapping,
-      activeHighlightExtension(),
-    ];
-  }, [handleEvaluate, stop, handleSave, handleSaveAs, handleOpen]);
-
-  // --- Initialize CodeMirror ---
+  // --- Initialize CodeMirror (ONCE) ---
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -156,9 +174,13 @@ export const StrudelRepl: React.FC = () => {
     const activeTab = usePatternStore.getState().getActiveTab();
     const initialCode = activeTab?.code ?? '';
 
+    if (!extensionsRef.current) {
+      extensionsRef.current = buildExtensions(updatingFromStore);
+    }
+
     const state = EditorState.create({
       doc: initialCode,
-      extensions: makeExtensions(),
+      extensions: extensionsRef.current,
     });
 
     const view = new EditorView({ state, parent: editorRef.current });
@@ -166,13 +188,17 @@ export const StrudelRepl: React.FC = () => {
     startHighlightLoop(view);
 
     return () => { stopHighlightLoop(); clearHighlights(); view.destroy(); viewRef.current = null; };
-  }, [makeExtensions, stop]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty — editor created once, never recreated
 
   // --- Tab switching ---
 
   useEffect(() => {
     const view = viewRef.current;
     if (!view || activeTabId === prevActiveTabIdRef.current) return;
+
+    // Suppress store→editor sync during switch
+    switchingTabRef.current = true;
 
     // Save current tab's EditorState
     tabStatesRef.current.set(prevActiveTabIdRef.current, view.state);
@@ -183,22 +209,31 @@ export const StrudelRepl: React.FC = () => {
       view.setState(cachedState);
     } else {
       const tab = usePatternStore.getState().tabs.find((t: Tab) => t.id === activeTabId);
+      if (!extensionsRef.current) {
+        extensionsRef.current = buildExtensions(updatingFromStore);
+      }
       const newState = EditorState.create({
         doc: tab?.code ?? '',
-        extensions: makeExtensions(),
+        extensions: extensionsRef.current,
       });
       view.setState(newState);
     }
 
     prevActiveTabIdRef.current = activeTabId;
-  }, [activeTabId, makeExtensions]);
 
-  // --- Sync store -> editor (active tab code) ---
+    // Re-enable sync after a tick (let React settle)
+    requestAnimationFrame(() => { switchingTabRef.current = false; });
+  }, [activeTabId]);
+
+  // --- Sync store → editor (for AI updates to active tab) ---
 
   useEffect(() => {
     const unsub = usePatternStore.subscribe(
       selectActiveCode,
       (code) => {
+        // Don't sync during tab switch — the tab switch effect handles it
+        if (switchingTabRef.current) return;
+
         const view = viewRef.current;
         if (!view) return;
         const currentDoc = view.state.doc.toString();
