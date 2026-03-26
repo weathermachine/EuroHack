@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePatternStore } from '../../stores/patternStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useAudioStore } from '../../stores/audioStore';
@@ -16,7 +16,8 @@ function formatTime(seconds: number): string {
 }
 
 export default function StatusBar() {
-  const cps = usePatternStore((s) => s.cps);
+  const bpm = usePatternStore((s) => s.bpm);
+  const setBpm = usePatternStore((s) => s.setBpm);
   const isPlaying = usePatternStore((s) => s.isPlaying);
   const setPlaying = usePatternStore((s) => s.setPlaying);
   const crtEnabled = useUIStore((s) => s.crtEnabled);
@@ -24,9 +25,27 @@ export default function StatusBar() {
   const { beatScale } = useBeatReactive();
 
   const [elapsed, setElapsed] = useState(0);
+  const [editingBpm, setEditingBpm] = useState(false);
+  const [bpmDraft, setBpmDraft] = useState('');
+  const bpmInputRef = useRef<HTMLInputElement>(null);
   const playStartRef = useRef<number | null>(null);
 
-  const bpm = Math.round(cps * 120);
+  const handleBpmClick = useCallback(() => {
+    setBpmDraft(String(bpm));
+    setEditingBpm(true);
+  }, [bpm]);
+
+  const commitBpm = useCallback(() => {
+    const val = parseInt(bpmDraft, 10);
+    if (!isNaN(val) && val >= 20 && val <= 400) {
+      setBpm(val);
+    }
+    setEditingBpm(false);
+  }, [bpmDraft, setBpm]);
+
+  useEffect(() => {
+    if (editingBpm) bpmInputRef.current?.focus();
+  }, [editingBpm]);
 
   // Timer
   useEffect(() => {
@@ -67,13 +86,36 @@ export default function StatusBar() {
         </div>
         <span className={styles.separator}>│</span>
 
-        {/* BPM — scales on beat */}
-        <span
-          className={styles.bpm}
-          style={{ transform: `scale(${beatScale})` }}
-        >
-          ♩ {bpm} BPM
-        </span>
+        {/* BPM — click to edit */}
+        {editingBpm ? (
+          <span className={styles.bpmEdit}>
+            ♩{' '}
+            <input
+              ref={bpmInputRef}
+              className={styles.bpmInput}
+              type="number"
+              min={20}
+              max={400}
+              value={bpmDraft}
+              onChange={(e) => setBpmDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitBpm();
+                if (e.key === 'Escape') setEditingBpm(false);
+              }}
+              onBlur={commitBpm}
+            />{' '}
+            BPM
+          </span>
+        ) : (
+          <span
+            className={styles.bpm}
+            style={{ transform: `scale(${beatScale})`, cursor: 'pointer' }}
+            onClick={handleBpmClick}
+            title="Click to set BPM"
+          >
+            ♩ {bpm} BPM
+          </span>
+        )}
         <span className={styles.separator}>│</span>
 
         {/* Playing state */}

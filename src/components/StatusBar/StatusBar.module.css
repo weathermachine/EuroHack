@@ -36,6 +36,39 @@
   display: inline-block;
 }
 
+.bpm:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bpmEdit {
+  color: var(--accent-amber);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bpmInput {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+  font-weight: 700;
+  color: var(--accent-amber);
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid var(--accent-amber);
+  border-radius: 2px;
+  padding: 0 4px;
+  width: 42px;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.bpmInput::-webkit-inner-spin-button,
+.bpmInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .transport {
   display: flex;
   gap: 4px;

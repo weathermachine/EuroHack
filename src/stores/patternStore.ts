@@ -18,6 +18,7 @@ interface PatternStore {
 
   // Global state (shared across all tabs)
   isPlaying: boolean;
+  bpm: number;
   cps: number;
   cyclePosition: number;
   lastError: string | null;
@@ -43,8 +44,9 @@ interface PatternStore {
   // Derived helper
   getActiveTab: () => Tab | undefined;
 
-  // Global actions (unchanged)
+  // Global actions
   setPlaying: (playing: boolean) => void;
+  setBpm: (bpm: number) => void;
   setCps: (cps: number) => void;
   setCyclePosition: (pos: number) => void;
   setError: (error: string | null) => void;
@@ -83,6 +85,7 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
 
   // Global state
   isPlaying: false,
+  bpm: 120,
   cps: 0.5, // 120 BPM
   cyclePosition: 0,
   lastError: null,
@@ -258,9 +261,10 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
     return state.tabs.find((t) => t.id === state.activeTabId);
   },
 
-  // Global actions (unchanged)
+  // Global actions
   setPlaying: (isPlaying) => set({ isPlaying }),
-  setCps: (cps) => set({ cps }),
+  setBpm: (bpm) => set({ bpm, cps: bpm / 120 }),
+  setCps: (cps) => set({ cps, bpm: Math.round(cps * 120) }),
   setCyclePosition: (cyclePosition) => set({ cyclePosition }),
   setError: (lastError) => set({ lastError }),
   setLastWorkingCode: (lastWorkingCode) => set({ lastWorkingCode }),

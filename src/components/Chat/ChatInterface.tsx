@@ -79,10 +79,12 @@ export default function ChatInterface() {
           if (code) {
             // Show the AI-generated code in the active tab
             setCode(code);
-            // Evaluate all armed tabs combined (respects MixBar)
+            // Evaluate all armed tabs combined (respects MixBar + BPM)
             import('@/audio/engine').then(async (engine) => {
-              const combinedCode = usePatternStore.getState().buildCombinedCode();
-              const result = await engine.evaluateCode(combinedCode || code);
+              const store = usePatternStore.getState();
+              const combinedCode = store.buildCombinedCode();
+              const bpmCode = `setcpm(${store.bpm}/4)\n`;
+              const result = await engine.evaluateCode(bpmCode + (combinedCode || code));
               if (!result.success) {
                 appendToLastMessage(`\n⚠️ Code error: ${result.error}`);
               }
@@ -226,8 +228,10 @@ export default function ChatInterface() {
     (code: string) => {
       setCode(code);
       import('@/audio/engine').then((engine) => {
-        const combinedCode = usePatternStore.getState().buildCombinedCode();
-        engine.evaluateCode(combinedCode || code);
+        const store = usePatternStore.getState();
+        const combinedCode = store.buildCombinedCode();
+        const bpmCode = `setcpm(${store.bpm}/4)\n`;
+        engine.evaluateCode(bpmCode + (combinedCode || code));
       }).catch(() => {
         // Engine may not be initialized
       });

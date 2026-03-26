@@ -165,9 +165,12 @@ export const StrudelRepl: React.FC = () => {
     const code = viewRef.current.state.doc.toString();
     const store = usePatternStore.getState();
     store.setTabCode(store.activeTabId, code);
-    // Evaluate all armed tabs combined
+    // Evaluate all armed tabs combined, with BPM from status bar
     const combinedCode = store.buildCombinedCode();
-    if (combinedCode) evaluate(combinedCode);
+    if (combinedCode) {
+      const bpmCode = `setcpm(${store.bpm}/4)\n`;
+      evaluate(bpmCode + combinedCode);
+    }
   }, [evaluate]);
 
   // Keep handler refs up to date (keymaps dispatch through these)
