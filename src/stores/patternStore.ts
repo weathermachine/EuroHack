@@ -233,8 +233,12 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
     if (armedTabs.length === 0) return '';
     if (armedTabs.length === 1) return armedTabs[0].code;
 
+    // Concatenate directly — no {} blocks because Strudel's transpiler
+    // treats $: as special label syntax that must be at the top level.
+    // Variable collisions (duplicate let/const names) will produce a clear
+    // error the user can fix by renaming.
     return armedTabs
-      .map((tab) => `// --- ${tab.name} ---\n{\n${tab.code}\n}`)
+      .map((tab) => `// ── ${tab.name} ──\n${tab.code}`)
       .join('\n\n');
   },
 
