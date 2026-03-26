@@ -77,10 +77,12 @@ export default function ChatInterface() {
         case 'update_pattern': {
           const code = tool.input.code as string;
           if (code) {
-            // Show the AI-generated code in the REPL so the user can see and edit it
+            // Show the AI-generated code in the active tab
             setCode(code);
+            // Evaluate all armed tabs combined (respects MixBar)
             import('@/audio/engine').then(async (engine) => {
-              const result = await engine.evaluateCode(code);
+              const combinedCode = usePatternStore.getState().buildCombinedCode();
+              const result = await engine.evaluateCode(combinedCode || code);
               if (!result.success) {
                 appendToLastMessage(`\n⚠️ Code error: ${result.error}`);
               }
@@ -224,7 +226,8 @@ export default function ChatInterface() {
     (code: string) => {
       setCode(code);
       import('@/audio/engine').then((engine) => {
-        engine.evaluateCode(code);
+        const combinedCode = usePatternStore.getState().buildCombinedCode();
+        engine.evaluateCode(combinedCode || code);
       }).catch(() => {
         // Engine may not be initialized
       });

@@ -9,6 +9,7 @@ import { useStrudel } from './useStrudel';
 import { usePatternStore, selectActiveCode } from '@/stores/patternStore';
 import type { Tab } from '@/stores/patternStore';
 import TabBar from './TabBar';
+import MixBar from './MixBar';
 import { saveFile, saveFileAs, openFile } from './fileOperations';
 import styles from './StrudelRepl.module.css';
 
@@ -151,10 +152,13 @@ export const StrudelRepl: React.FC = () => {
 
   const handleEvaluate = useCallback(() => {
     if (!viewRef.current) return;
+    // Sync editor content to store first
     const code = viewRef.current.state.doc.toString();
-    const tabId = usePatternStore.getState().activeTabId;
-    usePatternStore.getState().setTabCode(tabId, code);
-    evaluate(code);
+    const store = usePatternStore.getState();
+    store.setTabCode(store.activeTabId, code);
+    // Evaluate all armed tabs combined
+    const combinedCode = store.buildCombinedCode();
+    if (combinedCode) evaluate(combinedCode);
   }, [evaluate]);
 
   // Keep handler refs up to date (keymaps dispatch through these)
@@ -397,6 +401,11 @@ export const StrudelRepl: React.FC = () => {
         </span>
       </div>
       <div ref={editorRef} className={styles.editor} />
+      <MixBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onToggleArmed={(id) => usePatternStore.getState().toggleArmed(id)}
+      />
       <div
         ref={drawContainerRef}
         className={styles.drawContainer}

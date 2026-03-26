@@ -7,6 +7,7 @@ export interface Tab {
   code: string;
   isDirty: boolean;
   fileHandle?: FileSystemFileHandle | null;
+  isArmed: boolean; // participates in concurrent playback via MixBar
 }
 
 interface PatternStore {
@@ -30,6 +31,11 @@ interface PatternStore {
   setTabName: (tabId: string, name: string) => void;
   setTabDirty: (tabId: string, dirty: boolean) => void;
   setTabFileHandle: (tabId: string, handle: FileSystemFileHandle | null) => void;
+
+  // Mix (concurrent playback)
+  explicitlyArmedIds: string[];
+  toggleArmed: (tabId: string) => void;
+  buildCombinedCode: () => string;
 
   // Backward-compatible convenience (operates on active tab)
   setCode: (code: string) => void;
@@ -68,10 +74,12 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
       code: DEFAULT_CODE,
       isDirty: false,
       fileHandle: null,
+      isArmed: true,
     },
   ],
   activeTabId: initialTabId,
   nextUntitledIndex: 2,
+  explicitlyArmedIds: [],
 
   // Global state
   isPlaying: false,
@@ -91,9 +99,16 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
       code: code ?? '',
       isDirty: false,
       fileHandle: fileHandle ?? null,
+      isArmed: true, // auto-armed since it becomes active
     };
+    // Disarm outgoing active tab if not explicitly armed
+    const updatedTabs = state.tabs.map((t) =>
+      t.id === state.activeTabId && !state.explicitlyArmedIds.includes(t.id)
+        ? { ...t, isArmed: false }
+        : t,
+    );
     set({
-      tabs: [...state.tabs, newTab],
+      tabs: [...updatedTabs, newTab],
       activeTabId: id,
       ...(name == null ? { nextUntitledIndex: state.nextUntitledIndex + 1 } : {}),
     });
@@ -102,8 +117,9 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
 
   removeTab: (tabId: string) => {
     const state = get();
+    const cleanedExplicit = state.explicitlyArmedIds.filter((id) => id !== tabId);
+
     if (state.tabs.length === 1) {
-      // Last tab — create a new empty tab first
       const id = generateId();
       const newTab: Tab = {
         id,
@@ -111,11 +127,13 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
         code: '',
         isDirty: false,
         fileHandle: null,
+        isArmed: true,
       };
       set({
         tabs: [newTab],
         activeTabId: id,
         nextUntitledIndex: state.nextUntitledIndex + 1,
+        explicitlyArmedIds: [],
       });
       return;
     }
@@ -125,15 +143,32 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
 
     let newActiveId = state.activeTabId;
     if (state.activeTabId === tabId) {
-      // Switch to nearest remaining tab
       const newIdx = Math.min(idx, remaining.length - 1);
       newActiveId = remaining[newIdx].id;
+      // Auto-arm the new active tab
+      remaining[newIdx] = { ...remaining[newIdx], isArmed: true };
     }
 
-    set({ tabs: remaining, activeTabId: newActiveId });
+    set({ tabs: remaining, activeTabId: newActiveId, explicitlyArmedIds: cleanedExplicit });
   },
 
-  setActiveTab: (tabId: string) => set({ activeTabId: tabId }),
+  setActiveTab: (tabId: string) => {
+    const state = get();
+    if (tabId === state.activeTabId) return;
+
+    // Disarm outgoing tab if not explicitly armed, arm incoming tab
+    const updatedTabs = state.tabs.map((t) => {
+      if (t.id === state.activeTabId && !state.explicitlyArmedIds.includes(t.id)) {
+        return { ...t, isArmed: false };
+      }
+      if (t.id === tabId) {
+        return { ...t, isArmed: true };
+      }
+      return t;
+    });
+
+    set({ tabs: updatedTabs, activeTabId: tabId });
+  },
 
   setTabCode: (tabId: string, code: string) => {
     set({
@@ -165,6 +200,42 @@ export const usePatternStore = create<PatternStore>()(subscribeWithSelector((set
         t.id === tabId ? { ...t, fileHandle: handle } : t,
       ),
     });
+  },
+
+  // Mix (concurrent playback)
+  toggleArmed: (tabId: string) => {
+    const state = get();
+    const tab = state.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+
+    const newArmed = !tab.isArmed;
+    const updatedTabs = state.tabs.map((t) =>
+      t.id === tabId ? { ...t, isArmed: newArmed } : t,
+    );
+
+    let updatedExplicit = state.explicitlyArmedIds;
+    if (newArmed) {
+      // Explicitly arming — remember this
+      if (!updatedExplicit.includes(tabId)) {
+        updatedExplicit = [...updatedExplicit, tabId];
+      }
+    } else {
+      // Explicitly disarming — forget explicit status
+      updatedExplicit = updatedExplicit.filter((id) => id !== tabId);
+    }
+
+    set({ tabs: updatedTabs, explicitlyArmedIds: updatedExplicit });
+  },
+
+  buildCombinedCode: () => {
+    const state = get();
+    const armedTabs = state.tabs.filter((t) => t.isArmed && t.code.trim());
+    if (armedTabs.length === 0) return '';
+    if (armedTabs.length === 1) return armedTabs[0].code;
+
+    return armedTabs
+      .map((tab) => `// --- ${tab.name} ---\n{\n${tab.code}\n}`)
+      .join('\n\n');
   },
 
   // Backward-compatible convenience

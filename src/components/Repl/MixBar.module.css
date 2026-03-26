@@ -1,0 +1,101 @@
+.mixBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  height: 28px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.mixBar::-webkit-scrollbar {
+  height: 2px;
+}
+
+.mixBar::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+
+.channelActive {
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.channelName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+.channelActive .channelName {
+  color: var(--accent-cyan);
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 28px;
+  height: 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle:hover {
+  border-color: var(--text-dim);
+}
+
+.toggleOn {
+  background: rgba(0, 255, 65, 0.2);
+  border-color: var(--accent-green);
+}
+
+.toggleDot {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.toggleOn .toggleDot {
+  transform: translateX(14px);
+  background: var(--accent-green);
+}

@@ -136,9 +136,9 @@ export default function HydraCanvas() {
     hydra.applyShader(customHydraCode);
   }, [customHydraCode, vizMode, hydra]);
 
-  // Events render loop — only runs when vizMode is 'events'
+  // Events render loop — runs in events mode, or in any mode when stopped (idle overlay)
   useEffect(() => {
-    if (vizMode !== 'events') return;
+    if (vizMode !== 'events' && isPlaying) return;
 
     let running = true;
 
@@ -225,18 +225,18 @@ export default function HydraCanvas() {
 
       {vizMode === 'hydra' && <VizControls />}
 
-      {/* Events canvas - visible when mode is events */}
-      <canvas
-        ref={eventsCanvasRef}
-        className={styles.canvas}
-        style={{ display: vizMode === 'events' ? 'block' : 'none' }}
-      />
-
       {/* Hydra canvas - visible when mode is hydra */}
       <canvas
         ref={hydraCanvasRef}
         className={styles.canvas}
         style={{ display: vizMode === 'hydra' ? 'block' : 'none' }}
+      />
+
+      {/* Events canvas - visible in events mode, or as idle overlay when stopped */}
+      <canvas
+        ref={eventsCanvasRef}
+        className={styles.canvas}
+        style={{ display: (vizMode === 'events' || !isPlaying) ? 'block' : 'none' }}
       />
 
       {vizError && (
@@ -254,7 +254,7 @@ function drawIdleState(ctx: CanvasRenderingContext2D, width: number, height: num
   ctx.font = '600 18px JetBrains Mono, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Code Visualizer', centerX, centerY - 20);
+  ctx.fillText('E u r o  H a c k', centerX, centerY - 20);
 
   const triSize = 20;
   const triY = centerY + 15;
