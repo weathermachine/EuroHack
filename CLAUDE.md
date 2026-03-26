@@ -41,7 +41,7 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 
 ### Stores (Zustand)
 
-- `patternStore` — code, pattern ref, playback state, error recovery (keeps `lastWorkingCode` fallback)
+- `patternStore` — multi-tab code editor state (`tabs: Tab[]`, `activeTabId`), playback state, error recovery. `setCode()` is backward-compat wrapper targeting active tab. File handles stored per tab for re-saving.
 - `chatStore` — message history, SSE streaming state
 - `audioStore` — FFT, RMS, spectral centroid, beat detection flags
 - `uiStore` — panel focus, CRT toggle, fullscreen

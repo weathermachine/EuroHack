@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Extension } from '@codemirror/state';
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { basicSetup } from 'codemirror';
 import { strudelHighlight } from './strudelHighlight';
 import { activeHighlightExtension, startHighlightLoop, stopHighlightLoop, clearHighlights } from './activeHighlight';
 import { useStrudel } from './useStrudel';
-import { usePatternStore } from '@/stores/patternStore';
+import { usePatternStore, selectActiveCode } from '@/stores/patternStore';
+import type { Tab } from '@/stores/patternStore';
+import TabBar from './TabBar';
+import { saveFile, saveFileAs, openFile } from './fileOperations';
 import styles from './StrudelRepl.module.css';
 
 const darkTheme = EditorView.theme(
@@ -42,42 +45,120 @@ export const StrudelRepl: React.FC = () => {
   const isPlaying = usePatternStore((s) => s.isPlaying);
   const updatingFromStore = useRef(false);
 
+  // Tab state from store
+  const tabs = usePatternStore((s) => s.tabs);
+  const activeTabId = usePatternStore((s) => s.activeTabId);
+
+  // EditorState cache for tab switching
+  const tabStatesRef = useRef<Map<string, EditorState>>(new Map());
+  const prevActiveTabIdRef = useRef<string>(activeTabId);
+
+  // --- File operation handlers ---
+
+  const handleSave = useCallback(async () => {
+    const tab = usePatternStore.getState().getActiveTab();
+    if (!tab) return;
+    const handle = await saveFile(tab.code, tab.fileHandle);
+    if (handle) {
+      usePatternStore.getState().setTabFileHandle(tab.id, handle);
+      usePatternStore.getState().setTabDirty(tab.id, false);
+      if (tab.name.startsWith('Untitled')) {
+        const name = (handle as any).name?.replace(/\.(str|js)$/, '') || tab.name;
+        usePatternStore.getState().setTabName(tab.id, name);
+      }
+    }
+  }, []);
+
+  const handleSaveAs = useCallback(async () => {
+    const tab = usePatternStore.getState().getActiveTab();
+    if (!tab) return;
+    const handle = await saveFileAs(tab.code);
+    if (handle) {
+      usePatternStore.getState().setTabFileHandle(tab.id, handle);
+      usePatternStore.getState().setTabDirty(tab.id, false);
+      const name = (handle as any).name?.replace(/\.(str|js)$/, '') || tab.name;
+      usePatternStore.getState().setTabName(tab.id, name);
+    }
+  }, []);
+
+  const handleOpen = useCallback(async () => {
+    const result = await openFile();
+    if (result) {
+      const store = usePatternStore.getState();
+      const tabId = store.addTab(result.name, result.code, result.handle);
+      store.setTabDirty(tabId, false);
+    }
+  }, []);
+
+  const handleCloseTab = useCallback((tabId: string) => {
+    const store = usePatternStore.getState();
+    const tab = store.tabs.find((t: Tab) => t.id === tabId);
+    if (tab?.isDirty) {
+      if (!window.confirm(`"${tab.name}" has unsaved changes. Close anyway?`)) return;
+    }
+    tabStatesRef.current.delete(tabId);
+    store.removeTab(tabId);
+  }, []);
+
+  const handleAddTab = useCallback(() => {
+    usePatternStore.getState().addTab();
+  }, []);
+
+  const handleRenameTab = useCallback((tabId: string, newName: string) => {
+    usePatternStore.getState().setTabName(tabId, newName);
+  }, []);
+
+  // --- Evaluate ---
+
   const handleEvaluate = useCallback(() => {
     if (!viewRef.current) return;
     const code = viewRef.current.state.doc.toString();
-    usePatternStore.getState().setCode(code);
+    const tabId = usePatternStore.getState().activeTabId;
+    usePatternStore.getState().setTabCode(tabId, code);
     evaluate(code);
   }, [evaluate]);
 
-  // Initialize CodeMirror
-  useEffect(() => {
-    if (!editorRef.current) return;
-    const initialCode = usePatternStore.getState().code;
+  // --- Build reusable extensions ---
 
-    const evalKeymap = keymap.of([
-      {
-        key: 'Ctrl-Enter',
-        run: () => { handleEvaluate(); return true; },
-      },
-      {
-        key: 'Ctrl-.',
-        run: () => { stop(); return true; },
-      },
-    ]);
-
+  const makeExtensions = useCallback((): Extension[] => {
     const updateListener = EditorView.updateListener.of((update: ViewUpdate) => {
       if (update.docChanged && !updatingFromStore.current) {
-        usePatternStore.getState().setCode(update.state.doc.toString());
+        const currentTabId = usePatternStore.getState().activeTabId;
+        usePatternStore.getState().setTabCode(currentTabId, update.state.doc.toString());
       }
     });
 
+    const evalKeymap = keymap.of([
+      { key: 'Ctrl-Enter', run: () => { handleEvaluate(); return true; } },
+      { key: 'Ctrl-.', run: () => { stop(); return true; } },
+      { key: 'Ctrl-s', run: () => { handleSave(); return true; } },
+      { key: 'Ctrl-Shift-s', run: () => { handleSaveAs(); return true; } },
+      { key: 'Ctrl-o', run: () => { handleOpen(); return true; } },
+    ]);
+
+    return [
+      basicSetup,
+      javascript(),
+      strudelHighlight,
+      darkTheme,
+      evalKeymap,
+      updateListener,
+      EditorView.lineWrapping,
+      activeHighlightExtension(),
+    ];
+  }, [handleEvaluate, stop, handleSave, handleSaveAs, handleOpen]);
+
+  // --- Initialize CodeMirror ---
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const activeTab = usePatternStore.getState().getActiveTab();
+    const initialCode = activeTab?.code ?? '';
+
     const state = EditorState.create({
       doc: initialCode,
-      extensions: [
-        basicSetup, javascript(), strudelHighlight, darkTheme,
-        evalKeymap, updateListener, EditorView.lineWrapping,
-        activeHighlightExtension(),
-      ],
+      extensions: makeExtensions(),
     });
 
     const view = new EditorView({ state, parent: editorRef.current });
@@ -85,12 +166,38 @@ export const StrudelRepl: React.FC = () => {
     startHighlightLoop(view);
 
     return () => { stopHighlightLoop(); clearHighlights(); view.destroy(); viewRef.current = null; };
-  }, [handleEvaluate, stop]);
+  }, [makeExtensions, stop]);
 
-  // Sync store → editor
+  // --- Tab switching ---
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || activeTabId === prevActiveTabIdRef.current) return;
+
+    // Save current tab's EditorState
+    tabStatesRef.current.set(prevActiveTabIdRef.current, view.state);
+
+    // Restore or create target tab's state
+    const cachedState = tabStatesRef.current.get(activeTabId);
+    if (cachedState) {
+      view.setState(cachedState);
+    } else {
+      const tab = usePatternStore.getState().tabs.find((t: Tab) => t.id === activeTabId);
+      const newState = EditorState.create({
+        doc: tab?.code ?? '',
+        extensions: makeExtensions(),
+      });
+      view.setState(newState);
+    }
+
+    prevActiveTabIdRef.current = activeTabId;
+  }, [activeTabId, makeExtensions]);
+
+  // --- Sync store -> editor (active tab code) ---
+
   useEffect(() => {
     const unsub = usePatternStore.subscribe(
-      (state) => state.code,
+      selectActiveCode,
       (code) => {
         const view = viewRef.current;
         if (!view) return;
@@ -231,6 +338,14 @@ export const StrudelRepl: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelectTab={(id) => usePatternStore.getState().setActiveTab(id)}
+        onCloseTab={handleCloseTab}
+        onAddTab={handleAddTab}
+        onRenameTab={handleRenameTab}
+      />
       <div className={styles.toolbar}>
         <span className={styles.label}>STRUDEL REPL</span>
         <span className={styles.hint}>

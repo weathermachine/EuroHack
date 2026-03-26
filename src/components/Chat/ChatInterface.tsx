@@ -1,7 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { useChatStore, createMessageId } from '@/stores/chatStore';
-import { usePatternStore } from '@/stores/patternStore';
+import { usePatternStore, selectActiveCode } from '@/stores/patternStore';
 import { useVizStore } from '@/stores/vizStore';
 import { sendChatMessage } from '@/api/chat';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
@@ -22,7 +22,7 @@ export default function ChatInterface() {
   const completeStream = useChatStore((s) => s.completeStream);
   const addToHistory = useChatStore((s) => s.addToHistory);
 
-  const patternCode = usePatternStore((s) => s.code);
+  const patternCode = usePatternStore(selectActiveCode);
   const isPlaying = usePatternStore((s) => s.isPlaying);
   const cps = usePatternStore((s) => s.cps);
   const lastError = usePatternStore((s) => s.lastError);
