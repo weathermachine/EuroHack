@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { EditorState, Extension } from '@codemirror/state';
 import { EditorView, keymap, ViewUpdate } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
@@ -11,6 +11,7 @@ import type { Tab } from '@/stores/patternStore';
 import TabBar from './TabBar';
 import MixBar from './MixBar';
 import { saveFile, saveFileAs, openFile } from './fileOperations';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import styles from './StrudelRepl.module.css';
 
 const darkTheme = EditorView.theme(
@@ -75,6 +76,7 @@ function buildExtensions(updatingFromStore: React.MutableRefObject<boolean>): Ex
 }
 
 export const StrudelRepl: React.FC = () => {
+  const [confirmClose, setConfirmClose] = useState<{ tabId: string; tabName: string } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const drawContainerRef = useRef<HTMLDivElement>(null);
@@ -136,10 +138,17 @@ export const StrudelRepl: React.FC = () => {
     const store = usePatternStore.getState();
     const tab = store.tabs.find((t: Tab) => t.id === tabId);
     if (tab?.isDirty) {
-      if (!window.confirm(`"${tab.name}" has unsaved changes. Close anyway?`)) return;
+      setConfirmClose({ tabId, tabName: tab.name });
+      return;
     }
     tabStatesRef.current.delete(tabId);
     store.removeTab(tabId);
+  }, []);
+
+  const doCloseTab = useCallback((tabId: string) => {
+    tabStatesRef.current.delete(tabId);
+    usePatternStore.getState().removeTab(tabId);
+    setConfirmClose(null);
   }, []);
 
   const handleAddTab = useCallback(() => {
@@ -300,6 +309,16 @@ export const StrudelRepl: React.FC = () => {
     return () => { observer.disconnect(); resizeObserver.disconnect(); };
   }, []);
 
+  // Listen for Ctrl+W close-tab events from keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tabId = (e as CustomEvent).detail as string;
+      handleCloseTab(tabId);
+    };
+    window.addEventListener('ai-rack:close-tab', handler);
+    return () => window.removeEventListener('ai-rack:close-tab', handler);
+  }, [handleCloseTab]);
+
   // Clear highlights when playback stops
   useEffect(() => {
     if (!isPlaying) clearHighlights();
@@ -418,6 +437,13 @@ export const StrudelRepl: React.FC = () => {
           <span className={styles.errorIcon}>!</span>
           {lastError}
         </div>
+      )}
+      {confirmClose && (
+        <ConfirmDialog
+          message={`"${confirmClose.tabName}" has unsaved changes. Close anyway?`}
+          onConfirm={() => doCloseTab(confirmClose.tabId)}
+          onCancel={() => setConfirmClose(null)}
+        />
       )}
     </div>
   );

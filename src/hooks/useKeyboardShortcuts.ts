@@ -99,16 +99,13 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Ctrl+W: close active tab
+      // Ctrl+W: close active tab (dispatches event for non-blocking confirm)
       if (mod && e.key === 'w') {
         e.preventDefault();
         const store = usePatternStore.getState();
         const tab = store.getActiveTab();
         if (tab) {
-          if (tab.isDirty) {
-            if (!window.confirm(`"${tab.name}" has unsaved changes. Close anyway?`)) return;
-          }
-          store.removeTab(tab.id);
+          window.dispatchEvent(new CustomEvent('ai-rack:close-tab', { detail: tab.id }));
         }
         return;
       }
