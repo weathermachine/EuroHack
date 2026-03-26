@@ -45,7 +45,7 @@ Requires `ANTHROPIC_API_KEY` env var for chat functionality. Node 20+.
 - `chatStore` — message history, SSE streaming state
 - `audioStore` — FFT, RMS, spectral centroid, beat detection flags
 - `uiStore` — panel focus, CRT toggle, fullscreen
-- `vizStore` — visualization state (`vizMode: 'events' | 'hydra'`, `selectedShader`, `customHydraCode`, custom draw code)
+- `vizStore` — visualization state (`vizMode: 'events' | 'hydra'`, `selectedShader`, `customHydraCode`, custom draw code). AI uses `update_visualization` for Canvas 2D (events) and `update_hydra` for GPU shaders. 12 demoscene-style Canvas 2D examples in `server/knowledge/13-canvas-visualizations.md`.
 
 ### Audio Engine (src/audio/)
 
